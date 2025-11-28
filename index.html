@@ -3,198 +3,224 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Prompt Fix — Upload & Generate Prompt</title>
+<title>Prompt Maker — Multi-Expert Security SOP</title>
 <style>
-  body{font-family:system-ui,Arial;margin:18px;background:#f7f9fc;color:#111}
+  body{font-family:system-ui,Arial;background:#f5f7fb;color:#111;padding:18px}
+  h1{font-size:20px;margin:0 0 6px}
+  p.muted{color:#666;margin-top:4px;margin-bottom:12px}
   .card{background:#fff;padding:12px;border-radius:10px;box-shadow:0 1px 6px rgba(0,0,0,0.06);margin-bottom:12px}
-  input,textarea,button{width:100%;padding:10px;margin-top:8px;border-radius:8px;border:1px solid #d0d7e0}
-  button{background:#0b63ff;color:#fff;border:none;font-weight:700;cursor:pointer}
-  #preview{max-width:280px;border-radius:8px;display:none;margin-top:8px}
-  .muted{font-size:13px;color:#666;margin-top:6px}
+  button,input,textarea,select{width:100%;padding:10px;border-radius:8px;border:1px solid #d6dbe6;margin-top:8px;box-sizing:border-box}
+  .row{display:flex;gap:12px;flex-wrap:wrap}
+  .col{flex:1;min-width:260px}
+  #preview{max-width:260px;border-radius:8px;display:none;margin-top:8px}
+  .expert-list{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
+  .muted-small{font-size:13px;color:#666}
+  textarea#promptOutput{height:240px;white-space:pre-wrap}
+  .inline{display:inline-block;width:auto}
+  .btn-primary{background:#0b63ff;color:#fff;border:none;font-weight:700;cursor:pointer}
 </style>
 </head>
 <body>
+<h1>Prompt Maker — Multi-Expert Security SOP</h1>
+<p class="muted">Upload foto (camera/gallery), pilih satu atau beberapa ahli, lalu Generate Prompt → Copy → Paste ke ChatGPT / AI pilihanmu.</p>
 
-<h2>Prompt Fix — Upload Foto → Generate Prompt</h2>
-<p class="muted">Simple & pasti jalan. Upload foto lalu tekan "Generate Prompt".</p>
+<div class="card row">
+  <div class="col">
+    <label><strong>Ambil foto (kamera)</strong></label>
+    <input id="cameraInput" type="file" accept="image/*" capture="environment">
+    <label style="margin-top:8px"><strong>Upload dari galeri</strong></label>
+    <input id="galleryInput" type="file" accept="image/*">
+    <img id="preview" alt="preview image"/>
+    <div class="muted-small">Kedua tombol bekerja di HP: "Ambil foto" buka kamera; "Upload dari galeri" buka album.</div>
+  </div>
 
-<div class="card">
-  <label>1) Pilih/Gunakan Kamera (Upload)</label>
-  <input id="fileInput" type="file" accept="image/*" capture="environment">
-  <img id="preview" alt="preview" />
+  <div class="col">
+    <label><strong>Metadata (EXIF / Geolocation)</strong></label>
+    <input id="lat" placeholder="Latitude (otomatis jika ada EXIF)"/>
+    <input id="lon" placeholder="Longitude (otomatis jika ada EXIF)"/>
+    <input id="timestamp" placeholder="Timestamp (otomatis jika tersedia)"/>
+    <input id="place" placeholder="Nama tempat / keterangan (opsional)"/>
+    <button id="getGeoBtn" class="inline">Ambil GPS Perangkat</button>
+    <div class="muted-small">Jika EXIF tidak tersedia, tekan Ambil GPS Perangkat.</div>
+  </div>
 </div>
 
 <div class="card">
-  <label>2) Data Otomatis (EXIF atau Geolocation)</label>
-  <input id="lat" placeholder="Latitude (otomatis jika ada)">
-  <input id="lon" placeholder="Longitude (otomatis jika ada)">
-  <input id="timestamp" placeholder="Timestamp (otomatis jika ada)">
-  <input id="place" placeholder="Nama tempat (optional)">
-  <div class="muted">Kalau EXIF tidak ada, tekan tombol ambil GPS perangkat.</div>
-  <button id="getGeoBtn" type="button">Ambil GPS Perangkat</button>
+  <label><strong>Pilih Ahli (boleh pilih lebih dari 1)</strong></label>
+  <div class="expert-list" id="expertList">
+    <!-- checkboxes injected by script -->
+  </div>
+  <div class="muted-small">Contoh: centang K3 Listrik + Fire Safety jika ingin jawaban dari kedua perspektif.</div>
 </div>
 
 <div class="card">
-  <label>3) Info Lokasi / Catatan Singkat (opsional)</label>
-  <textarea id="note" placeholder="Tambahkan catatan singkat, mis: 'PT Asusa - Pulo Gadung'"></textarea>
+  <label><strong>Catatan tambahan / konteks (opsional)</strong></label>
+  <textarea id="note" placeholder="Contoh: 'Gerbang masuk pabrik, pagar rusak, lampu padam di malam hari'"></textarea>
+</div>
+
+<div class="card row">
+  <div class="col">
+    <button id="generateBtn" class="btn-primary">Generate Prompt</button>
+  </div>
+  <div class="col">
+    <button id="copyBtn" class="inline">Copy Prompt</button>
+  </div>
 </div>
 
 <div class="card">
-  <button id="generateBtn">Generate Prompt</button>
-</div>
-
-<div class="card">
-  <label>PROMPT (copy → paste ke ChatGPT)</label>
-  <textarea id="promptOutput" placeholder="Prompt akan muncul di sini"></textarea>
-  <button id="copyBtn">Copy Prompt</button>
+  <label><strong>PROMPT (copy → paste ke ChatGPT / AI lain)</strong></label>
+  <textarea id="promptOutput" placeholder="Prompt akan muncul di sini setelah Generate"></textarea>
 </div>
 
 <script>
-/* Minimal EXIF reader (tiny): only for GPS fields parsing if EXIF present.
-   Uses EXIF.js hosted via CDN automatically if browser supports it.
-   But to completely avoid external dependency issues, we try to parse basic EXIF via built-in
-   if EXIF lib not loaded; fallback to device geolocation. */
+/* --- expert list definitions --- */
+const EXPERTS = [
+  {id:'exp1', label:'Security / Satpam Profesional (sertifikat profesional)'},
+  {id:'exp2', label:'Ahli Sertifikat K3 Umum'},
+  {id:'exp3', label:'Ahli Sertifikat K3 Konstruksi'},
+  {id:'exp4', label:'Ahli Sertifikat K3 Kimia'},
+  {id:'exp5', label:'Ahli Sertifikat K3 Listrik'},
+  {id:'exp6', label:'Ahli Sertifikat K3 Manufaktur'},
+  {id:'exp7', label:'Ahli Sertifikat K3 Minyak dan Gas'},
+  {id:'exp8', label:'Ahli Sertifikat Fire Safety / Pemadam Kebakaran'},
+  {id:'exp9', label:'Ahli Sertifikat Auditor SMK3'},
+  {id:'exp10', label:'Ahli Sertifikat K3 Pertambangan'},
+  {id:'exp11', label:'Team Forensik INAFIS'}
+];
 
-(function(){
-  // Try to load exif-js on demand (CDN) but continue if fails
-  const exifScript = document.createElement('script');
-  exifScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/exif-js/2.3.0/exif.min.js';
-  exifScript.onload = ()=> console.log('EXIF.js loaded');
-  exifScript.onerror = ()=> console.log('EXIF.js failed to load (continuing without)');
-  document.head.appendChild(exifScript);
-})();
-
-const fileInput = document.getElementById('fileInput');
-const preview = document.getElementById('preview');
-const latEl = document.getElementById('lat');
-const lonEl = document.getElementById('lon');
-const tsEl = document.getElementById('timestamp');
-const placeEl = document.getElementById('place');
-const noteEl = document.getElementById('note');
-const generateBtn = document.getElementById('generateBtn');
-const promptOutput = document.getElementById('promptOutput');
-const copyBtn = document.getElementById('copyBtn');
-const getGeoBtn = document.getElementById('getGeoBtn');
-
-let lastImageDataUrl = null;
-
-fileInput.addEventListener('change', async (e) => {
-  const f = e.target.files[0];
-  if(!f) return;
-  // preview
-  lastImageDataUrl = URL.createObjectURL(f);
-  preview.src = lastImageDataUrl;
-  preview.style.display = 'block';
-
-  // set timestamp from file (if available)
-  try {
-    // Try EXIF via EXIF.getData if lib loaded
-    if(window.EXIF && EXIF.getData){
-      EXIF.getData(f, function(){
-        const dt = EXIF.getTag(this, 'DateTimeOriginal') || EXIF.getTag(this, 'DateTime') || null;
-        const gpsLat = EXIF.getTag(this, 'GPSLatitude');
-        const gpsLon = EXIF.getTag(this, 'GPSLongitude');
-        const latRef = EXIF.getTag(this, 'GPSLatitudeRef');
-        const lonRef = EXIF.getTag(this, 'GPSLongitudeRef');
-        if(dt) {
-          // convert format YYYY:MM:DD HH:MM:SS -> ISO
-          const iso = dt.replace(/^(\d{4}):(\d{2}):(\d{2})/, '$1-$2-$3');
-          tsEl.value = new Date(iso).toISOString();
-        }
-        if(gpsLat && gpsLon){
-          const lat = dmsToDeg(gpsLat, latRef);
-          const lon = dmsToDeg(gpsLon, lonRef);
-          latEl.value = lat;
-          lonEl.value = lon;
-        } else {
-          // no EXIF GPS
-        }
-      });
-      return;
-    }
-  } catch(err){
-    console.warn('EXIF parsing failed', err);
-  }
-
-  // fallback: set timestamp now
-  tsEl.value = new Date().toISOString();
+/* render checkboxes */
+const expertList = document.getElementById('expertList');
+EXPERTS.forEach(e=>{
+  const wrapper = document.createElement('label');
+  wrapper.style.display='flex';
+  wrapper.style.alignItems='center';
+  wrapper.style.gap='8px';
+  const cb = document.createElement('input');
+  cb.type='checkbox'; cb.id=e.id; cb.value=e.label;
+  const span = document.createElement('span'); span.textContent = e.label;
+  wrapper.appendChild(cb); wrapper.appendChild(span);
+  expertList.appendChild(wrapper);
 });
 
-// convert DMS array to decimal
+/* file inputs */
+const cameraInput = document.getElementById('cameraInput');
+const galleryInput = document.getElementById('galleryInput');
+const preview = document.getElementById('preview');
+
+let lastImageFile = null;
+
+cameraInput.addEventListener('change', handleFileSelect);
+galleryInput.addEventListener('change', handleFileSelect);
+
+async function handleFileSelect(e){
+  const f = e.target.files[0];
+  if(!f) return;
+  lastImageFile = f;
+  const url = URL.createObjectURL(f);
+  preview.src = url; preview.style.display = 'block';
+  // try EXIF if exif-js available
+  if(window.EXIF && EXIF.getData){
+    EXIF.getData(f, function(){
+      const lat = EXIF.getTag(this,'GPSLatitude');
+      const lon = EXIF.getTag(this,'GPSLongitude');
+      const latRef = EXIF.getTag(this,'GPSLatitudeRef');
+      const lonRef = EXIF.getTag(this,'GPSLongitudeRef');
+      const dt = EXIF.getTag(this,'DateTimeOriginal') || EXIF.getTag(this,'DateTime');
+      if(lat && lon){
+        document.getElementById('lat').value = dmsToDeg(lat, latRef);
+        document.getElementById('lon').value = dmsToDeg(lon, lonRef);
+      }
+      if(dt) document.getElementById('timestamp').value = dt.replace(/^(\d{4}):(\d{2}):(\d{2})/, '$1-$2-$3');
+    });
+  } else {
+    // no exif lib loaded: just set timestamp now
+    document.getElementById('timestamp').value = new Date().toISOString();
+  }
+}
+
+/* convert DMS to decimal */
 function dmsToDeg(dms, ref){
-  try {
+  try{
     const d = dms[0].numerator / dms[0].denominator;
     const m = dms[1].numerator / dms[1].denominator;
     const s = dms[2].numerator / dms[2].denominator;
     let dd = d + m/60 + s/3600;
-    if(ref === 'S' || ref === 'W') dd = -dd;
+    if(ref==='S' || ref==='W') dd = -dd;
     return dd.toFixed(6);
-  } catch(e){
-    return '';
-  }
+  } catch(e){ return ''; }
 }
 
-// geolocation fallback
-getGeoBtn.addEventListener('click', ()=>{
-  if(!navigator.geolocation) return alert('Geolocation tidak didukung di browser ini.');
-  getGeoBtn.textContent = 'Mencari lokasi...';
-  navigator.geolocation.getCurrentPosition((pos)=>{
-    latEl.value = pos.coords.latitude.toFixed(6);
-    lonEl.value = pos.coords.longitude.toFixed(6);
-    getGeoBtn.textContent = 'Ambil GPS Perangkat';
-  }, (err)=>{
-    getGeoBtn.textContent = 'Ambil GPS Perangkat';
-    alert('Gagal ambil lokasi: ' + err.message);
-  }, {enableHighAccuracy:true,timeout:8000});
+/* geolocation fallback */
+document.getElementById('getGeoBtn').addEventListener('click', ()=>{
+  const btn = document.getElementById('getGeoBtn');
+  if(!navigator.geolocation) return alert('Geolocation tidak didukung browser ini.');
+  btn.textContent = 'Mencari lokasi...';
+  navigator.geolocation.getCurrentPosition(pos=>{
+    document.getElementById('lat').value = pos.coords.latitude.toFixed(6);
+    document.getElementById('lon').value = pos.coords.longitude.toFixed(6);
+    btn.textContent = 'Ambil GPS Perangkat';
+  }, err=>{
+    btn.textContent = 'Ambil GPS Perangkat';
+    alert('Gagal ambil GPS: '+ err.message);
+  }, {enableHighAccuracy:true, timeout:8000});
 });
 
-generateBtn.addEventListener('click', ()=>{
-  // Build structured context (simple)
+/* generate prompt */
+document.getElementById('generateBtn').addEventListener('click', async ()=>{
+  // collect selected experts
+  const selected = EXPERTS.filter(e=>document.getElementById(e.id).checked);
+  let expertsText = selected.length ? selected.map(e=>e.label).join('; ') : 'Tidak ada (gunakan perspektif umum security)';
+  // build structured context
   const ctx = {
-    timestamp: tsEl.value || new Date().toISOString(),
-    location: (latEl.value && lonEl.value) ? {lat: latEl.value, lon: lonEl.value, label: placeEl.value || null} : null,
-    place_label: placeEl.value || noteEl.value || null,
-    image_attached: !!lastImageDataUrl,
-    notes: noteEl.value || ''
+    timestamp: document.getElementById('timestamp').value || new Date().toISOString(),
+    lat: document.getElementById('lat').value || null,
+    lon: document.getElementById('lon').value || null,
+    place: document.getElementById('place').value || '',
+    notes: document.getElementById('note').value || ''
   };
 
-  // Build clean prompt for ChatGPT
-  const promptLines = [];
-  promptLines.push('Anda adalah Ahli Keamanan Profesional.');
-  promptLines.push('Analisa data berikut dan buat SOP dan Protap (prosedur operasi tetap) yang praktis, prioritas tindakan, analisa risiko, dan rekomendasi pencegahan:');
-  promptLines.push('');
-  promptLines.push('=== DATA LOCAION ===');
-  if(ctx.location){
-    promptLines.push(`Lokasi: ${ctx.location.label || 'Unknown'}`);
-    promptLines.push(`Latitude: ${ctx.location.lat}`);
-    promptLines.push(`Longitude: ${ctx.location.lon}`);
-  } else {
-    promptLines.push('Lokasi: Tidak tersedia (tidak ada EXIF GPS).');
-  }
-  promptLines.push(`Waktu foto / timestamp: ${ctx.timestamp}`);
-  if(ctx.place_label) promptLines.push(`Keterangan lokasi: ${ctx.place_label}`);
-  if(ctx.notes) promptLines.push(`Catatan tambahan: ${ctx.notes}`);
-  promptLines.push('');
-  promptLines.push('Berikan output yang rapi dan terstruktur:');
-  promptLines.push('- Ringkasan singkat situasi');
-  promptLines.push('- Risk level (low/medium/high) + skor 0-100');
-  promptLines.push('- Immediate actions (1-6 langkah prioritas)');
-  promptLines.push('- SOP singkat (checklist langkah nyata)');
-  promptLines.push('- Rekomendasi pencegahan jangka panjang');
-  promptLines.push('');
-  promptLines.push('Balas hanya dalam bahasa Indonesia dan rapi. Jika data lokasi tidak lengkap, sertakan langkah verifikasi yang jelas.');
-  const prompt = promptLines.join('\n');
+  // image included? we don't attach blob to prompt; mention it
+  const imageAttached = lastImageFile ? 'Ya (user mengunggah foto)' : 'Tidak';
 
-  promptOutput.value = prompt;
+  // create prompt
+  let p = '';
+  p += `Anda adalah kumpulan ahli keamanan dan keselamatan. Tugas: Gunakan semua perspektif ahli yang dicentang untuk menghasilkan SOP dan Protap yang DETAILED dan STEP-BY-STEP berdasarkan data berikut.\n\n`;
+  p += `--- PILIHAN AHLI ---\n${expertsText}\n\n`;
+  p += `--- DATA KONTEKS ---\n`;
+  p += `Waktu foto / timestamp: ${ctx.timestamp}\n`;
+  if(ctx.lat && ctx.lon) p += `Koordinat (lat,lon): ${ctx.lat}, ${ctx.lon}\n`;
+  if(ctx.place) p += `Nama/Tanda lokasi: ${ctx.place}\n`;
+  p += `Gambar terlampir: ${imageAttached}\n`;
+  if(ctx.notes) p += `Catatan tambahan: ${ctx.notes}\n`;
+  p += `\n--- INSTRUKSI UNTUK AHLI ---\n`;
+  p += `1) Untuk setiap ahli yang dicentang: berikan analisa singkat (2-4 kalimat) tentang risiko utama dari perspektif ahli tersebut.\n`;
+  p += `2) Susun SOP operasional STEP-BY-STEP (urutan tindakan prioritas 1..N) yang bisa langsung dilakukan oleh satpam/petugas di lapangan. Gunakan format checklist bernomor dan ringkas tiap langkah.\n`;
+  p += `3) Sertakan Protap (prosedur tetap) untuk penanganan jangka panjang dan rekomendasi preventif (pencahayaan, pengamanan fisik, peralatan, prosedur verifikasi, jadwal patroli).\n`;
+  p += `4) Jika diperlukan tindakan darurat (kebakaran, bahan kimia, adanya senjata, atau kejadian kriminal tinggi), sertakan langkah eskalasi dan kontak yang direkomendasikan.\n`;
+  p += `5) Setelah memberikan SOP per ahli, gabungkan menjadi satu SOP utama yang mengoptimalkan semua rekomendasi (prioritaskan tindakan aman dan legal). Tulis langkah-langkah dalam urutan tindakan tercepat ke jangka panjang.\n`;
+  p += `6) Tulis ringkasan "Decision checklist" (5 poin) yang mudah dibaca saat patroli.\n\n`;
+  p += `--- FORMAT OUTPUT ---\nBerikan output berbahasa Indonesia. Gunakan heading untuk tiap bagian: "Analisa per Ahli", "SOP Step-by-Step", "Protap (Prosedur Tetap)", "Rekomendasi Preventif", "Eskalasi Darurat", "Decision Checklist".\n\n`;
+  p += `Catatan: jika ada informasi lokasi yang hilang (mis. GPS), sertakan langkah verifikasi yang jelas (contoh: minta identitas, foto plat kendaraan, rekam video 30s).`;
+  // set to textarea
+  document.getElementById('promptOutput').value = p;
 });
 
-// copy
-copyBtn.addEventListener('click', ()=>{
-  const t = promptOutput;
+/* copy button */
+document.getElementById('copyBtn').addEventListener('click', ()=>{
+  const t = document.getElementById('promptOutput');
   t.select();
   document.execCommand('copy');
-  alert('Prompt disalin. Paste di ChatGPT/AI lain.');
+  alert('Prompt disalin. Paste ke ChatGPT / AI lainnya.');
 });
+
+/* load optional EXIF library (for better gps parsing) */
+(function(){
+  const s = document.createElement('script');
+  s.src = 'https://cdnjs.cloudflare.com/ajax/libs/exif-js/2.3.0/exif.min.js';
+  s.onload = ()=> console.log('EXIF loaded');
+  s.onerror = ()=> console.log('EXIF not loaded');
+  document.head.appendChild(s);
+})();
 </script>
 </body>
 </html>
