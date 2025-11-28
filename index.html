@@ -1,402 +1,200 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="id">
 <head>
-<meta charset="utf-8" />
+<meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Security Prompt Maker v4 — PWA Patrol & Prompt Builder</title>
-
-<!-- Libraries -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/exif-js/2.3.0/exif.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@vladmandic/human/dist/human.js"></script>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
+<title>Prompt Fix — Upload & Generate Prompt</title>
 <style>
-  :root{font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif}
-  body{margin:0;padding:18px;background:#f4f6fb;color:#111}
-  header{display:flex;align-items:center;gap:12px;margin-bottom:12px}
-  h1{font-size:18px;margin:0}
-  .row{display:flex;gap:12px;align-items:flex-start}
-  .col{background:#fff;padding:12px;border-radius:10px;box-shadow:0 2px 6px rgba(0,0,0,0.06)}
-  .left{flex:1;min-width:320px}
-  .right{width:420px}
-  input,textarea,select,button{width:100%;padding:8px;margin-top:8px;border-radius:8px;border:1px solid #d0d6e0}
-  button{cursor:pointer;background:#1155ff;color:#fff;border:none}
-  #preview{max-width:280px;border-radius:10px;display:block;margin-top:8px}
-  #map{height:300px;border-radius:8px;margin-top:8px}
-  textarea{height:140px;white-space:pre-wrap}
-  table{width:100%;border-collapse:collapse;margin-top:8px}
-  td,th{padding:6px;border-bottom:1px solid #eee;font-size:13px}
-  .badge{display:inline-block;padding:4px 8px;border-radius:999px;background:#e8f0ff;color:#083b8a;font-weight:600}
-  .muted{color:#666;font-size:13px}
+  body{font-family:system-ui,Arial;margin:18px;background:#f7f9fc;color:#111}
+  .card{background:#fff;padding:12px;border-radius:10px;box-shadow:0 1px 6px rgba(0,0,0,0.06);margin-bottom:12px}
+  input,textarea,button{width:100%;padding:10px;margin-top:8px;border-radius:8px;border:1px solid #d0d7e0}
+  button{background:#0b63ff;color:#fff;border:none;font-weight:700;cursor:pointer}
+  #preview{max-width:280px;border-radius:8px;display:none;margin-top:8px}
+  .muted{font-size:13px;color:#666;margin-top:6px}
 </style>
 </head>
 <body>
-<header>
-  <div>
-    <h1>Security Prompt Maker v4 — Patrol PWA</h1>
-    <div class="muted">Ambil foto → analyze offline → batch patrol → generate prompt & voice</div>
-  </div>
-  <div style="margin-left:auto">
-    <span class="badge">PWA Offline</span>
-  </div>
-</header>
 
-<div class="row">
-  <div class="col left">
-    <label><strong>1) Ambil / Upload Foto</strong></label>
-    <input id="fileInput" type="file" accept="image/*" capture="environment" multiple />
-    <img id="preview" style="display:none"/>
-    <div class="muted">Pilih satu atau beberapa file untuk menambah ke rute patroli.</div>
+<h2>Prompt Fix — Upload Foto → Generate Prompt</h2>
+<p class="muted">Simple & pasti jalan. Upload foto lalu tekan "Generate Prompt".</p>
 
-    <label><strong>2) Metadata (otomatis)</strong></label>
-    <input id="lat" placeholder="Latitude">
-    <input id="lon" placeholder="Longitude">
-    <input id="timestamp" placeholder="Timestamp">
-    <input id="place" placeholder="Place (reverse geocode)">
-    <select id="areaType">
-      <option>Gate / Gerbang</option><option>Parkiran</option><option>Lorong / Koridor</option>
-      <option>Gudang / Industri</option><option>Jalan / Publik</option><option>Area Lainnya</option>
-    </select>
-    <input id="lightInfo" placeholder="Light analysis (auto)">
+<div class="card">
+  <label>1) Pilih/Gunakan Kamera (Upload)</label>
+  <input id="fileInput" type="file" accept="image/*" capture="environment">
+  <img id="preview" alt="preview" />
+</div>
 
-    <label><strong>3) Object Detection & Risk</strong></label>
-    <textarea id="objInfo" placeholder="Object detection results (auto)"></textarea>
-    <textarea id="riskInfo" placeholder="Risk analysis (auto)"></textarea>
-    <textarea id="crimeInfo" placeholder="Crime history (mock / manual)"></textarea>
+<div class="card">
+  <label>2) Data Otomatis (EXIF atau Geolocation)</label>
+  <input id="lat" placeholder="Latitude (otomatis jika ada)">
+  <input id="lon" placeholder="Longitude (otomatis jika ada)">
+  <input id="timestamp" placeholder="Timestamp (otomatis jika ada)">
+  <input id="place" placeholder="Nama tempat (optional)">
+  <div class="muted">Kalau EXIF tidak ada, tekan tombol ambil GPS perangkat.</div>
+  <button id="getGeoBtn" type="button">Ambil GPS Perangkat</button>
+</div>
 
-    <div style="display:flex;gap:8px;margin-top:8px">
-      <button id="addPatrolBtn">+ Add to Patrol</button>
-      <button id="analyzeAllBtn">Analyze Batch</button>
-    </div>
+<div class="card">
+  <label>3) Info Lokasi / Catatan Singkat (opsional)</label>
+  <textarea id="note" placeholder="Tambahkan catatan singkat, mis: 'PT Asusa - Pulo Gadung'"></textarea>
+</div>
 
-    <label style="margin-top:12px"><strong>Patrol List</strong></label>
-    <div id="patrolList"></div>
-    <div style="display:flex;gap:8px;margin-top:8px">
-      <button id="routeBtn">Generate Route (nearest)</button>
-      <button id="exportBtn">Export JSON</button>
-    </div>
+<div class="card">
+  <button id="generateBtn">Generate Prompt</button>
+</div>
 
-  </div>
-
-  <div class="col right">
-    <label><strong>Map & Route</strong></label>
-    <div id="map"></div>
-
-    <label style="margin-top:8px"><strong>Dashboard / Summary</strong></label>
-    <table id="summaryTable">
-      <thead><tr><th>Point</th><th>Risk</th><th>Action</th></tr></thead>
-      <tbody></tbody>
-    </table>
-
-    <label style="margin-top:8px"><strong>Prompt Builder (batch)</strong></label>
-    <textarea id="promptOutput" placeholder="Prompt will appear here"></textarea>
-    <div style="display:flex;gap:8px;margin-top:8px">
-      <button id="copyPromptBtn">Copy Prompt</button>
-      <button id="speakBtn">🔊 Speak Prompt</button>
-    </div>
-  </div>
+<div class="card">
+  <label>PROMPT (copy → paste ke ChatGPT)</label>
+  <textarea id="promptOutput" placeholder="Prompt akan muncul di sini"></textarea>
+  <button id="copyBtn">Copy Prompt</button>
 </div>
 
 <script>
-// ============ Storage structures ============
-let patrolPoints = []; // {id, lat, lon, ts, place, areaType, light, obj, risk, crime, imgDataUrl}
-let selectedImageDataUrl = null;
+/* Minimal EXIF reader (tiny): only for GPS fields parsing if EXIF present.
+   Uses EXIF.js hosted via CDN automatically if browser supports it.
+   But to completely avoid external dependency issues, we try to parse basic EXIF via built-in
+   if EXIF lib not loaded; fallback to device geolocation. */
 
-// ============ Initialize map ============
-const map = L.map('map', {zoomControl:true}).setView([-6.2,106.8], 12);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap contributors'}).addTo(map);
-let routeLayer = L.layerGroup().addTo(map);
+(function(){
+  // Try to load exif-js on demand (CDN) but continue if fails
+  const exifScript = document.createElement('script');
+  exifScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/exif-js/2.3.0/exif.min.js';
+  exifScript.onload = ()=> console.log('EXIF.js loaded');
+  exifScript.onerror = ()=> console.log('EXIF.js failed to load (continuing without)');
+  document.head.appendChild(exifScript);
+})();
 
-// ============ Human.js init for object detection ============
-const human = new Human({
-  modelBasePath: "https://cdn.jsdelivr.net/npm/@vladmandic/human/models",
-  detect: { object: { enabled: true }, face: { enabled: false } }
-});
-(async()=>{ await human.load(); await human.warmup(); })();
+const fileInput = document.getElementById('fileInput');
+const preview = document.getElementById('preview');
+const latEl = document.getElementById('lat');
+const lonEl = document.getElementById('lon');
+const tsEl = document.getElementById('timestamp');
+const placeEl = document.getElementById('place');
+const noteEl = document.getElementById('note');
+const generateBtn = document.getElementById('generateBtn');
+const promptOutput = document.getElementById('promptOutput');
+const copyBtn = document.getElementById('copyBtn');
+const getGeoBtn = document.getElementById('getGeoBtn');
 
-// ============ Helpers ============
-function uid(prefix='p'){return prefix+Math.random().toString(36).slice(2,9)}
-function toDataURL(file){ return new Promise(r=>{
-  const fr = new FileReader(); fr.onload = ()=> r(fr.result); fr.readAsDataURL(file);
-});}
+let lastImageDataUrl = null;
 
-function analyzeBrightness(img){
-  const c = document.createElement('canvas'), ctx = c.getContext('2d');
-  c.width = img.naturalWidth; c.height = img.naturalHeight;
-  ctx.drawImage(img,0,0);
-  const data = ctx.getImageData(0,0,c.width,c.height).data;
-  let sum=0; for(let i=0;i<data.length;i+=4) sum += data[i];
-  const avg = sum/(data.length/4);
-  if(avg<60) return "Gelap"; if(avg<120) return "Redup"; return "Terang";
-}
+fileInput.addEventListener('change', async (e) => {
+  const f = e.target.files[0];
+  if(!f) return;
+  // preview
+  lastImageDataUrl = URL.createObjectURL(f);
+  preview.src = lastImageDataUrl;
+  preview.style.display = 'block';
 
-// EXIF GPS -> decimal
-function dmsToDec(dms, ref){
-  const d = dms[0].numerator / dms[0].denominator;
-  const m = dms[1].numerator / dms[1].denominator;
-  const s = dms[2].numerator / dms[2].denominator;
-  let dd = d + m/60 + s/3600; if(ref==='S'||ref==='W') dd = -dd;
-  return dd.toFixed(6);
-}
-
-// reverse geocode (nominatim)
-async function reverseGeo(lat, lon){
-  try{
-    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
-    if(!res.ok) return null;
-    const js = await res.json();
-    return js.display_name || null;
-  }catch(e){ return null; }
-}
-
-// simple crime mock based on place keywords
-function crimeMock(place){
-  place = (place||'').toLowerCase();
-  if(place.includes('pulo gadung')) return 'Catatan: beberapa laporan pencurian kendaraan dan akses ilegal malam hari.';
-  if(place.includes('terminal')||place.includes('stasiun')) return 'Catatan: pencopetan dan kehilangan barang sering terjadi.';
-  return 'Tidak ada catatan publik otomatis (gunakan data internal untuk akurasi).';
-}
-
-// risk engine: combine rules and detection
-function computeRisk({areaType, light, objList, crimeText}){
-  let score = 10; let reasons = [];
-  if(areaType.toLowerCase().includes('gate')) score += 15, reasons.push('Area gerbang sensitif');
-  if(light==='Gelap') score += 20, reasons.push('Cahaya rendah');
-  if(objList.some(o=>o.label==='person')) {
-    const people = objList.filter(o=>o.label==='person').length;
-    if(people > 3) score += 20, reasons.push('Kerumunan terdeteksi');
-    else score += 8, reasons.push('Orang terdeteksi');
-  }
-  if(objList.some(o=>/car|truck|motor|vehicle|bicycle/i.test(o.label))) score += 5, reasons.push('Kendaraan terdeteksi');
-  if(/pencurian|pencopetan|perampasan|theft|steal/i.test(crimeText)) score += 25, reasons.push('Riwayat kriminal lokal');
-  // experimental weapon detection: check label names
-  if(objList.some(o=>/knife|gun|weapon|blade/i.test(o.label))) score += 35, reasons.push('Kemungkinan senjata (eksperimental)');
-  score = Math.min(100, score);
-  return {score, reasons};
-}
-
-// detect objects using human.js
-async function detectObjectsOnImage(imgElement){
-  const res = await human.detect(imgElement);
-  // map results to simpler form
-  const objects = (res.object || []).map(o=>({label:o.label, score:o.score}));
-  return objects;
-}
-
-// update patrol list UI
-function renderPatrolList(){
-  const container = document.getElementById('patrolList');
-  container.innerHTML = '';
-  patrolPoints.forEach(p=>{
-    const el = document.createElement('div');
-    el.style.borderBottom = '1px solid #eee'; el.style.padding='8px 0';
-    el.innerHTML = `<strong>${p.place||'Unknown'}</strong><div class="muted">Risk: ${p.risk.score} — ${p.risk.reasons.join('; ')}</div>
-      <div style="margin-top:6px;display:flex;gap:8px">
-        <button onclick="zoomTo('${p.id}')">Map</button>
-        <button onclick="removePoint('${p.id}')">Remove</button>
-      </div>`;
-    container.appendChild(el);
-  });
-  renderSummary();
-}
-
-// render summary table
-function renderSummary(){
-  const tbody = document.querySelector('#summaryTable tbody');
-  tbody.innerHTML = '';
-  patrolPoints.forEach((p,i)=>{
-    const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${i+1}. ${p.place||p.areaType||'Unknown'}</td><td>${p.risk.score}</td>
-      <td><button onclick="copyPointPrompt('${p.id}')">Copy Prompt</button></td>`;
-    tbody.appendChild(tr);
-  });
-}
-
-// zoom to a point on map
-function zoomTo(id){
-  const p = patrolPoints.find(x=>x.id===id); if(!p) return;
-  map.setView([p.lat,p.lon],18);
-}
-
-// remove point
-function removePoint(id){
-  patrolPoints = patrolPoints.filter(x=>x.id!==id);
-  renderPatrolList();
-  drawRouteOnMap([]);
-}
-
-// draw route (simple nearest neighbor)
-function drawRouteOnMap(order){
-  routeLayer.clearLayers();
-  if(order.length===0) return;
-  const latlngs = order.map(i=>[patrolPoints[i].lat, patrolPoints[i].lon]);
-  L.polyline(latlngs,{color:'blue'}).addTo(routeLayer);
-  patrolPoints.forEach(p=>{
-    L.marker([p.lat,p.lon]).addTo(routeLayer).bindPopup(`${p.place || p.areaType}<br>Risk:${p.risk.score}`);
-  });
-  map.fitBounds(latlngs);
-}
-
-// nearest neighbor ordering
-function computeRouteOrder(){
-  if(patrolPoints.length===0) return [];
-  // greedy: start at first point
-  const pts = patrolPoints.map(p=>[p.lat,p.lon]);
-  const used = new Array(pts.length).fill(false);
-  const order = [0]; used[0]=true;
-  for(let k=1;k<pts.length;k++){
-    const last = pts[order[order.length-1]];
-    let best=-1, bd=Infinity;
-    for(let i=0;i<pts.length;i++) if(!used[i]){
-      const d = (last[0]-pts[i][0])**2+(last[1]-pts[i][1])**2;
-      if(d<bd){ bd=d; best=i; }
+  // set timestamp from file (if available)
+  try {
+    // Try EXIF via EXIF.getData if lib loaded
+    if(window.EXIF && EXIF.getData){
+      EXIF.getData(f, function(){
+        const dt = EXIF.getTag(this, 'DateTimeOriginal') || EXIF.getTag(this, 'DateTime') || null;
+        const gpsLat = EXIF.getTag(this, 'GPSLatitude');
+        const gpsLon = EXIF.getTag(this, 'GPSLongitude');
+        const latRef = EXIF.getTag(this, 'GPSLatitudeRef');
+        const lonRef = EXIF.getTag(this, 'GPSLongitudeRef');
+        if(dt) {
+          // convert format YYYY:MM:DD HH:MM:SS -> ISO
+          const iso = dt.replace(/^(\d{4}):(\d{2}):(\d{2})/, '$1-$2-$3');
+          tsEl.value = new Date(iso).toISOString();
+        }
+        if(gpsLat && gpsLon){
+          const lat = dmsToDeg(gpsLat, latRef);
+          const lon = dmsToDeg(gpsLon, lonRef);
+          latEl.value = lat;
+          lonEl.value = lon;
+        } else {
+          // no EXIF GPS
+        }
+      });
+      return;
     }
-    used[best]=true; order.push(best);
+  } catch(err){
+    console.warn('EXIF parsing failed', err);
   }
-  return order;
-}
 
-// ============ File input handling ============
-document.getElementById('fileInput').addEventListener('change', async function(e){
-  const files = Array.from(e.target.files);
-  if(files.length===0) return;
-  // process first file preview
-  const first = files[0];
-  const dataUrl = await toDataURL(first);
-  selectedImageDataUrl = dataUrl;
-  const imgEl = document.getElementById('preview'); imgEl.src = dataUrl; imgEl.style.display='block';
-
-  // read EXIF
-  EXIF.getData(first, async function(){
-    const lat = EXIF.getTag(this,'GPSLatitude');
-    const lon = EXIF.getTag(this,'GPSLongitude');
-    const latRef = EXIF.getTag(this,'GPSLatitudeRef');
-    const lonRef = EXIF.getTag(this,'GPSLongitudeRef');
-    const dt = EXIF.getTag(this,'DateTimeOriginal') || EXIF.getTag(this,'DateTime');
-    if(lat && lon){
-      const la = parseFloat(dmsToDec(lat, latRef));
-      const lo = parseFloat(dmsToDec(lon, lonRef));
-      document.getElementById('lat').value = la;
-      document.getElementById('lon').value = lo;
-      const place = await reverseGeo(la, lo);
-      document.getElementById('place').value = place || '';
-    } else {
-      // ask device geolocation fallback
-      if(navigator.geolocation){
-        navigator.geolocation.getCurrentPosition(async pos=>{
-          const la = pos.coords.latitude, lo = pos.coords.longitude;
-          document.getElementById('lat').value = la; document.getElementById('lon').value = lo;
-          const place = await reverseGeo(la, lo);
-          document.getElementById('place').value = place || '';
-        }, ()=>{});
-      }
-    }
-    if(dt) document.getElementById('timestamp').value = dt.replace(/:/g,'-');
-
-    // analyze image: detect objects on preview element
-    const objects = await detectObjectsOnImage(document.getElementById('preview'));
-    document.getElementById('objInfo').value = objects.map(o=>`${o.label} (${Math.round(o.score*100)}%)`).join(', ');
-    document.getElementById('lightInfo').value = analyzeBrightness(document.getElementById('preview'));
-    const risk = computeRisk({areaType: document.getElementById('areaType').value, light: document.getElementById('lightInfo').value, objList: objects, crimeText: document.getElementById('crimeInfo').value || ''});
-    document.getElementById('riskInfo').value = `${risk.score} — ${risk.reasons.join('; ')}`;
-  });
+  // fallback: set timestamp now
+  tsEl.value = new Date().toISOString();
 });
 
-// add to patrol button
-document.getElementById('addPatrolBtn').addEventListener('click', function(){
-  const lat = parseFloat(document.getElementById('lat').value || NaN);
-  const lon = parseFloat(document.getElementById('lon').value || NaN);
-  if(Number.isNaN(lat) || Number.isNaN(lon)){ alert('Isi lokasi terlebih dahulu (EXIF atau geolocation)'); return; }
-  const p = {
-    id: uid('pt'),
-    lat, lon,
-    ts: document.getElementById('timestamp').value || new Date().toISOString(),
-    place: document.getElementById('place').value,
-    areaType: document.getElementById('areaType').value,
-    light: document.getElementById('lightInfo').value,
-    obj: document.getElementById('objInfo').value,
-    crime: document.getElementById('crimeInfo').value,
-    imgDataUrl: selectedImageDataUrl
+// convert DMS array to decimal
+function dmsToDeg(dms, ref){
+  try {
+    const d = dms[0].numerator / dms[0].denominator;
+    const m = dms[1].numerator / dms[1].denominator;
+    const s = dms[2].numerator / dms[2].denominator;
+    let dd = d + m/60 + s/3600;
+    if(ref === 'S' || ref === 'W') dd = -dd;
+    return dd.toFixed(6);
+  } catch(e){
+    return '';
+  }
+}
+
+// geolocation fallback
+getGeoBtn.addEventListener('click', ()=>{
+  if(!navigator.geolocation) return alert('Geolocation tidak didukung di browser ini.');
+  getGeoBtn.textContent = 'Mencari lokasi...';
+  navigator.geolocation.getCurrentPosition((pos)=>{
+    latEl.value = pos.coords.latitude.toFixed(6);
+    lonEl.value = pos.coords.longitude.toFixed(6);
+    getGeoBtn.textContent = 'Ambil GPS Perangkat';
+  }, (err)=>{
+    getGeoBtn.textContent = 'Ambil GPS Perangkat';
+    alert('Gagal ambil lokasi: ' + err.message);
+  }, {enableHighAccuracy:true,timeout:8000});
+});
+
+generateBtn.addEventListener('click', ()=>{
+  // Build structured context (simple)
+  const ctx = {
+    timestamp: tsEl.value || new Date().toISOString(),
+    location: (latEl.value && lonEl.value) ? {lat: latEl.value, lon: lonEl.value, label: placeEl.value || null} : null,
+    place_label: placeEl.value || noteEl.value || null,
+    image_attached: !!lastImageDataUrl,
+    notes: noteEl.value || ''
   };
-  // compute risk again with parsed objects
-  const objects = (document.getElementById('objInfo').value||'').split(',').map(s=>({label:s.split('(')[0].trim(), score:0.8}));
-  p.risk = computeRisk({areaType:p.areaType, light:p.light, objList:objects, crimeText:p.crime});
-  patrolPoints.push(p);
-  renderPatrolList();
-  // add marker
-  L.marker([p.lat,p.lon]).addTo(routeLayer).bindPopup(`${p.place || p.areaType}<br>Risk:${p.risk.score}`).openPopup();
-});
 
-// analyze batch button: re-run detection for all images if needed (here mock)
-document.getElementById('analyzeAllBtn').addEventListener('click', async function(){
-  for(const p of patrolPoints){
-    // re-evaluate risk cheaply
-    const objects = (p.obj||'').split(',').map(s=>({label:s.split('(')[0].trim(), score:0.8}));
-    p.risk = computeRisk({areaType:p.areaType, light:p.light, objList:objects, crimeText:p.crime});
+  // Build clean prompt for ChatGPT
+  const promptLines = [];
+  promptLines.push('Anda adalah Ahli Keamanan Profesional.');
+  promptLines.push('Analisa data berikut dan buat SOP dan Protap (prosedur operasi tetap) yang praktis, prioritas tindakan, analisa risiko, dan rekomendasi pencegahan:');
+  promptLines.push('');
+  promptLines.push('=== DATA LOCAION ===');
+  if(ctx.location){
+    promptLines.push(`Lokasi: ${ctx.location.label || 'Unknown'}`);
+    promptLines.push(`Latitude: ${ctx.location.lat}`);
+    promptLines.push(`Longitude: ${ctx.location.lon}`);
+  } else {
+    promptLines.push('Lokasi: Tidak tersedia (tidak ada EXIF GPS).');
   }
-  renderPatrolList();
-  alert('Batch analysis done.');
+  promptLines.push(`Waktu foto / timestamp: ${ctx.timestamp}`);
+  if(ctx.place_label) promptLines.push(`Keterangan lokasi: ${ctx.place_label}`);
+  if(ctx.notes) promptLines.push(`Catatan tambahan: ${ctx.notes}`);
+  promptLines.push('');
+  promptLines.push('Berikan output yang rapi dan terstruktur:');
+  promptLines.push('- Ringkasan singkat situasi');
+  promptLines.push('- Risk level (low/medium/high) + skor 0-100');
+  promptLines.push('- Immediate actions (1-6 langkah prioritas)');
+  promptLines.push('- SOP singkat (checklist langkah nyata)');
+  promptLines.push('- Rekomendasi pencegahan jangka panjang');
+  promptLines.push('');
+  promptLines.push('Balas hanya dalam bahasa Indonesia dan rapi. Jika data lokasi tidak lengkap, sertakan langkah verifikasi yang jelas.');
+  const prompt = promptLines.join('\n');
+
+  promptOutput.value = prompt;
 });
 
-// route generation
-document.getElementById('routeBtn').addEventListener('click', function(){
-  if(patrolPoints.length===0) return alert('Tidak ada titik di patrol list.');
-  const order = computeRouteOrder();
-  drawRouteOnMap(order);
+// copy
+copyBtn.addEventListener('click', ()=>{
+  const t = promptOutput;
+  t.select();
+  document.execCommand('copy');
+  alert('Prompt disalin. Paste di ChatGPT/AI lain.');
 });
-
-// export JSON
-document.getElementById('exportBtn').addEventListener('click', function(){
-  const blob = new Blob([JSON.stringify(patrolPoints,null,2)],{type:'application/json'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href=url; a.download='patrol_points.json'; a.click();
-  URL.revokeObjectURL(url);
-});
-
-// copy prompt: combine all points into single professional prompt
-document.getElementById('copyPromptBtn').addEventListener('click', function(){ copyPromptToClipboard(); });
-
-function copyPromptToClipboard(){
-  const prompt = buildBatchPrompt();
-  navigator.clipboard.writeText(prompt).then(()=> alert('Prompt disalin ke clipboard.'));
-}
-
-// speak prompt
-document.getElementById('speakBtn').addEventListener('click', function(){
-  const prompt = buildBatchPrompt();
-  if(!('speechSynthesis' in window)) return alert('Browser tidak mendukung TTS');
-  const ut = new SpeechSynthesisUtterance(prompt);
-  ut.lang = 'id-ID';
-  window.speechSynthesis.speak(ut);
-});
-
-// build batch prompt
-function buildBatchPrompt(){
-  let out = `Anda adalah Security Supervisor profesional.\n\nSaya memberikan daftar titik patroli berikut (foto + metadata). Buat SOP, Protap, dan prioritas tindakan untuk setiap lokasi serta ringkasan rekomendasi umum.\n\n`;
-  patrolPoints.forEach((p,i)=>{
-    out += `--- Lokasi ${i+1} ---\nNama: ${p.place || p.areaType}\nKoordinat: ${p.lat}, ${p.lon}\nWaktu: ${p.ts}\nTipe Area: ${p.areaType}\nCahaya: ${p.light}\nDeteksi Objek: ${p.obj}\nRiwayat Kriminal: ${p.crime}\nAnalisa Risiko: ${p.risk.score} — ${p.risk.reasons.join('; ')}\n\n`;
-  });
-  out += `\nBerikan: 1) SOP singkat per lokasi (prioritas tindakan 1-5), 2) Rekomendasi preventif umum, 3) Indikator kapan harus eskalasi ke pihak berwenang.\n\nTulis secara jelas, rapi, dan actionable.`;
-  document.getElementById('promptOutput').value = out;
-  return out;
-}
-
-// copy single point prompt - helper
-function copyPointPrompt(id){
-  const p = patrolPoints.find(x=>x.id===id);
-  if(!p) return;
-  const prompt = `Anda adalah Security Professional. Berikut data lokasi:\nNama: ${p.place}\nKoordinat: ${p.lat},${p.lon}\nTipe: ${p.areaType}\nDeteksi: ${p.obj}\nRiwayat: ${p.crime}\nAnalisa Risiko: ${p.risk.score} — ${p.risk.reasons.join('; ')}\n\nBuat SOP & Protap singkat.`;
-  navigator.clipboard.writeText(prompt).then(()=> alert('Prompt lokasi disalin.'));
-}
-
-// ============ Service worker registration for PWA offline ============
-if('serviceWorker' in navigator){
-  navigator.serviceWorker.register('sw.js').then(reg=>{
-    console.log('sw registered', reg.scope);
-  }).catch(err=>console.warn('sw failed', err));
-}
-
 </script>
 </body>
 </html>
