@@ -1,0 +1,421 @@
+﻿<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Prompt Generator Fix — Experts Visible & GPS Fix</title>
+<style>
+  :root{--bg:#f6f9ff;--card:#fff;--accent:#0b63ff;--muted:#6b7280;--radius:10px}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial;background:var(--bg);color:#0b1720;padding:18px}
+  .wrap{max-width:1100px;margin:0 auto}
+  header{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+  h1{margin:0;font-size:20px}
+  .lead{color:var(--muted);font-size:13px}
+  .grid{display:grid;grid-template-columns:1fr 420px;gap:16px}
+  @media (max-width:980px){ .grid{grid-template-columns:1fr} }
+  .card{background:var(--card);border-radius:var(--radius);padding:14px;box-shadow:0 6px 18px rgba(8,35,78,0.06);border:1px solid rgba(11,99,255,0.04)}
+  label.small{display:block;font-weight:700;margin-bottom:8px}
+  input[type="text"], textarea, select {width:100%;padding:10px;border-radius:8px;border:1px solid #e6eef9;background:#fbfdff}
+  textarea{min-height:120px;resize:vertical}
+  .row{display:flex;gap:10px}
+  .col{flex:1}
+  button{padding:10px 12px;border-radius:10px;border:none;background:var(--accent);color:#fff;font-weight:700;cursor:pointer}
+  button.ghost{background:transparent;color:var(--accent);border:1px solid rgba(11,99,255,0.12)}
+  .muted{color:var(--muted);font-size:13px}
+  #preview{max-width:100%;border-radius:8px;margin-top:8px;border:1px solid #eef6ff;display:none}
+  .groups{display:grid;gap:8px;margin-top:8px}
+  .group{border-radius:10px;border:1px solid rgba(8,35,78,0.04);overflow:hidden;background:linear-gradient(180deg,#fff,#fbfdff)}
+  .group-header{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;cursor:pointer}
+  .group-title{font-weight:800}
+  .group-sub{font-size:13px;color:var(--muted)}
+  .chev{transition:transform .22s}
+  .group-body{max-height:0;overflow:hidden;transition:max-height .28s;padding:0 12px}
+  .group-body.open{padding:10px 12px 14px;max-height:420px}
+  .expert-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+  .expert-item{display:flex;gap:8px;align-items:center;padding:8px;border-radius:8px;background:#fbfdff;border:1px solid rgba(11,99,255,0.03)}
+  .tiny{padding:8px 10px;border-radius:8px;font-size:13px}
+  .preset-list{max-height:120px;overflow:auto;border:1px dashed rgba(11,99,255,0.06);padding:8px;border-radius:8px;background:#fff}
+  .footer{color:var(--muted);font-size:13px;margin-top:12px}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>Prompt Generator — FIX</h1>
+        <div class="lead">Semua category muncul; GPS tombol sudah diperbaiki. Klik grup untuk buka/collapse.</div>
+      </div>
+      <div style="margin-left:auto" class="muted">Single-file • No server required (tapi geolocation bekerja paling baik lewat localhost/HTTPS)</div>
+    </header>
+
+    <div class="grid">
+      <!-- LEFT -->
+      <div>
+        <div class="card">
+          <label class="small">1) Upload Foto (kamera / galeri)</label>
+          <div class="row">
+            <div class="col">
+              <input id="cameraInput" type="file" accept="image/*" capture="environment">
+            </div>
+            <div class="col">
+              <input id="galleryInput" type="file" accept="image/*">
+            </div>
+          </div>
+          <img id="preview" alt="preview image"/>
+          <div class="row" style="margin-top:10px">
+            <div class="col">
+              <label class="small">Latitude</label>
+              <input id="lat" type="text" placeholder="Latitude (EXIF or device)">
+            </div>
+            <div class="col">
+              <label class="small">Longitude</label>
+              <input id="lon" type="text" placeholder="Longitude (EXIF or device)">
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:10px">
+            <button id="getGeoBtn" class="tiny ghost">Ambil GPS Perangkat</button>
+            <button id="clearBtn" class="tiny">Clear</button>
+          </div>
+          <div class="muted" style="margin-top:8px">Note: Jika lokasi tidak muncul, jalankan lewat <strong>http://localhost</strong> atau deploy ke HTTPS (GitHub Pages).</div>
+        </div>
+
+        <div class="card" style="margin-top:12px">
+          <label class="small">2) Pilih Ahli (klik grup untuk buka)</label>
+          <div class="groups" id="groupsContainer"></div>
+        </div>
+
+        <div class="card" style="margin-top:12px">
+          <label class="small">3) Catatan / Keterangan (opsional)</label>
+          <textarea id="note" placeholder="Contoh: 'Gerbang rusak, lampu mati, ada orang mencurigakan'"></textarea>
+        </div>
+      </div>
+
+      <!-- RIGHT -->
+      <aside>
+        <div class="card">
+          <label class="small">Presets (simpel)</label>
+          <div style="display:flex;gap:8px">
+            <input id="presetName" placeholder="Nama preset" class="tiny"/>
+            <button id="savePresetBtn" class="tiny">Save</button>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:8px">
+            <div style="flex:1">
+              <div id="presetList" class="preset-list">Belum ada preset.</div>
+            </div>
+            <div style="width:120px;display:flex;flex-direction:column;gap:6px">
+              <button id="applyPresetBtn" class="tiny ghost">Apply</button>
+              <button id="deletePresetBtn" class="tiny ghost">Delete</button>
+              <button id="exportPresetBtn" class="tiny ghost">Export</button>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:8px">
+            <input id="importPresetFile" type="file" accept="application/json" class="tiny"/>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:12px">
+          <label class="small">Pengaturan Prompt</label>
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+            <label style="display:flex;align-items:center;gap:8px"><input id="aggressiveToggle" type="checkbox" /> Aggressive Mode</label>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button id="generateBtn" class="tiny">Generate Prompt</button>
+            <button id="copyPromptBtn" class="tiny ghost">Copy User</button>
+            <button id="copyBothBtn" class="tiny ghost">Copy System+User</button>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:12px">
+          <label class="small">Hasil Prompt</label>
+          <textarea id="promptOutput" placeholder="Tekan Generate untuk membuat prompt..."></textarea>
+          <div style="display:flex;gap:8px;margin-top:8px">
+            <button id="mockBtn" class="tiny ghost">Mock Output</button>
+            <button id="downloadBtn" class="tiny ghost">Download</button>
+          </div>
+        </div>
+
+      </aside>
+    </div>
+
+    <div class="footer">Selesai — kategori harusnya sekarang muncul. Kalau masih bermasalah kasih tau browser & langkah yg lo lakuin.</div>
+  </div>
+
+<script>
+/* ---------- Expert group data (IDs match blocks used in assembly) ---------- */
+const GROUPS = [
+  {key:'g1', title:'Security & Forensics', sub:'Patroli, akses, bukti forensik', ids:[
+    {id:'exp1', label:'Security / Satpam Profesional (sertifikat profesional)'},
+    {id:'exp11', label:'Team Forensik INAFIS'}
+  ]},
+  {key:'g2', title:'K3 & Safety', sub:'K3 Umum, Konstruksi, Kimia, Listrik, Manufaktur, Migas, Fire, Auditor, Pertambangan', ids:[
+    {id:'exp2', label:'Ahli Sertifikat K3 Umum'},
+    {id:'exp3', label:'Ahli Sertifikat K3 Konstruksi'},
+    {id:'exp4', label:'Ahli Sertifikat K3 Kimia'},
+    {id:'exp5', label:'Ahli Sertifikat K3 Listrik'},
+    {id:'exp6', label:'Ahli Sertifikat K3 Manufaktur'},
+    {id:'exp7', label:'Ahli Sertifikat K3 Minyak dan Gas'},
+    {id:'exp8', label:'Ahli Sertifikat Fire Safety / Pemadam Kebakaran'},
+    {id:'exp9', label:'Ahli Sertifikat Auditor SMK3'},
+    {id:'exp10', label:'Ahli Sertifikat K3 Pertambangan'}
+  ]},
+  {key:'g3', title:'Environment, Architecture & M&E', sub:'Lingkungan, Arsitek, M&E, QS', ids:[
+    {id:'exp12', label:'Ahli Environmental & Lingkungan Hidup'},
+    {id:'exp13', label:'Ahli Arsitek'},
+    {id:'exp17', label:'Konsultan M&E (Mechanical & Electrical)'},
+    {id:'exp18', label:'Quantity Surveyor (QS)'}
+  ]},
+  {key:'g4', title:'Structural & Construction Management', sub:'Site Engineer, Pengawas, Konsultan Struktur', ids:[
+    {id:'exp14', label:'Insinyur Sipil / Struktural (Site Engineer)'},
+    {id:'exp15', label:'Konsultan Pengawas (Construction Management)'},
+    {id:'exp16', label:'Konsultan Struktur'}
+  ]},
+  {key:'g5', title:'Work-at-Height & Fire Specialists', sub:'TKBT/TKPK & Firefighting Level A', ids:[
+    {id:'exp19', label:'Ahli TKBT (Tenaga Kerja Bangunan Tinggi) level 1 & 2'},
+    {id:'exp20', label:'Ahli TKPK (Tenaga Kerja pada Ketinggian) levels 1-3'},
+    {id:'exp21', label:'Ahli K3 Spesialis Penanggulangan Kebakaran Tingkat A'}
+  ]}
+];
+
+/* Expert blocks (verbatim — used later to assemble prompt) */
+const EXPERT_BLOCKS = {
+  'exp1': `ROLE: Security / Satpam Profesional (sertifikat profesional)
+RESPONSIBILITIES: Provide immediate security assessment, patrol SOPs, access control checks, de-escalation tactics, evidence preservation, communication with HQ.
+REQUIREMENTS: Provide 2–4 sentence assessment, 4–6 immediate action bullets for frontline guards, then step-by-step SOP (numbered). Include operational checklists and minimal equipment list. Mention typical Indonesian security practice where relevant.`,
+  'exp2': `ROLE: Ahli K3 Umum (General Occupational Safety)
+RESPONSIBILITIES: Hazard identification, risk assessment, PPE, incident reporting procedures, emergency response coordination.
+REQUIREMENTS: Provide 2–4 sentence hazard analysis, recommend PPE & isolation steps, step-by-step SOP for securing area and protecting personnel. Include references to types of regulations to check (e.g., Peraturan Menteri Ketenagakerjaan, SNI/ISO safety standards) and advise to verify citations.`,
+  'exp3': `ROLE: Ahli K3 Konstruksi (Construction Safety Specialist)
+RESPONSIBILITIES: Structural hazards, work-at-height controls, scaffold/edge protection, temporary works, permit-to-work.
+REQUIREMENTS: Provide assessment focused on construction risks; detailed step-by-step SOP for securing structural hazards; include immediate cordon/isolate steps, shoring/prop suggestions, and who to contact (site engineer, foreman). Recommend standards to verify (SNI, Peraturan terkait K3 Konstruksi).`,
+  'exp4': `ROLE: Ahli K3 Kimia (Chemical Safety Specialist)
+RESPONSIBILITIES: Identify chemical hazards, shelter-in-place vs. evacuation decisions, containment, decontamination, PPE for chemicals.
+REQUIREMENTS: Provide hazard classification guidance, step-by-step immediate containment/evacuation SOP, decontamination steps and sample checklists. Include note to verify with MSDS/SDS for suspected chemicals and relevant environmental regulators.`,
+  'exp5': `ROLE: Ahli K3 Listrik (Electrical Safety Specialist)
+RESPONSIBILITIES: Identify live electrical hazards, lockout-tagout (LOTO), arc flash risk, safe isolation procedures.
+REQUIREMENTS: Provide quick immediate LOTO steps, a step-by-step SOP for electrical hazard response, required PPE and testing/verification steps, and indicate standards/regulators to verify (electrical safety regs/SNI).`,
+  'exp6': `ROLE: Ahli K3 Manufaktur (Manufacturing Safety)
+RESPONSIBILITIES: Machine guarding, process safety, permit-to-work, confined space, human-machine interaction risks.
+REQUIREMENTS: Provide 2–4 sentence manufacturing risk view, step-by-step SOP for machine isolation, lockout, and safe investigation, plus recommendations for process audits and maintenance protocols.`,
+  'exp7': `ROLE: Ahli K3 Minyak & Gas (Oil & Gas Safety Specialist)
+RESPONSIBILITIES: Hydrocarbon release, ignition control, hot work, flaring, evacuation, H2S risks.
+REQUIREMENTS: Provide immediate actions for potential hydrocarbon or H2S presence, gas detection & PPE recommendations, step-by-step emergency response and isolation, and advise which regulatory bodies to contact.`,
+  'exp8': `ROLE: Ahli Fire Safety / Pemadam Kebakaran (Firefighting Specialist)
+RESPONSIBILITIES: Fire risk assessment, initial firefighting steps, evacuation, firewatch, hydrant/foam usage.
+REQUIREMENTS: Provide immediate firefighting actions suitable for non-firefighter staff, step-by-step evacuation & suppression SOP, ignition source control, and recommendations for fire drills and equipment.`,
+  'exp9': `ROLE: Ahli Auditor SMK3 (Safety Management Systems Auditor)
+RESPONSIBILITIES: Assess compliance with SMK3, identify system gaps, corrective actions, audit evidence.
+REQUIREMENTS: Provide audit-focused analysis, checklist of records to collect, SOP to record corrective actions and timelines, and recommendations for audit evidence.`,
+  'exp10': `ROLE: Ahli Sertifikat K3 Pertambangan (Mining Safety Specialist)
+RESPONSIBILITIES: Ground control, blasting safety, confined space, heavy equipment hazards.
+REQUIREMENTS: Provide mining-specific risk points, immediate isolation & control steps, step-by-step SOP for ground control/evacuation, and regulatory verification notes.`,
+  'exp11': `ROLE: TEAM FORENSIK INAFIS (Forensic Investigation)
+RESPONSIBILITIES: Evidence preservation, scene integrity, chain of custody, photography protocol.
+REQUIREMENTS: Provide precise instructions for securing scene, photo angles, how to label and preserve evidence, minimal contamination protocol, and chain-of-custody checklist.`,
+  'exp12': `ROLE: Ahli Environmental & Lingkungan Hidup
+RESPONSIBILITIES: Environmental contamination, waste, spills, ecological impact assessment.
+REQUIREMENTS: Provide steps for containment of spills, immediate environmental protections, reporting obligations to environmental agency, and short-term mitigation measures.`,
+  'exp13': `ROLE: Ahli Arsitek
+RESPONSIBILITIES: Building access points, sight-lines, perimeter design, passive security by design.
+REQUIREMENTS: Provide assessment of physical layout risks, immediate measures to secure access, and architectural recommendations to reduce vulnerabilities (lighting, fences, visibility).`,
+  'exp14': `ROLE: Insinyur Sipil / Struktural (Site Engineer)
+RESPONSIBILITIES: Structural integrity checks, temporary works, load-bearing concerns.
+REQUIREMENTS: Provide quick structural safety checks, step-by-step SOP to assess and secure unstable structures, shoring/props guidance, and escalation criteria to structural engineer.`,
+  'exp15': `ROLE: Konsultan Pengawas (Construction Management)
+RESPONSIBILITIES: Project oversight, contractor control, permit-to-work enforcement.
+REQUIREMENTS: Provide actions to coordinate contractors, immediate site control SOP, and escalation paths to project manager and client.`,
+  'exp16': `ROLE: Konsultan Struktur
+RESPONSIBILITIES: Advanced structural assessment, design verification, retrofitting advice.
+REQUIREMENTS: Provide high-level structural diagnostic steps to preserve safety and recommend emergency propping/shoring steps until formal structural analysis can be performed.`,
+  'exp17': `ROLE: Konsultan M&E (Mechanical & Electrical)
+RESPONSIBILITIES: HVAC, utilities, electrical distribution, mechanical hazards.
+REQUIREMENTS: Provide immediate checks for mechanical/electrical failures, isolation steps, and temporary mitigation until technicians arrive.`,
+  'exp18': `ROLE: Quantity Surveyor (QS)
+RESPONSIBILITIES: Cost implications, remedial scope, prioritization by budget & urgency.
+REQUIREMENTS: Provide quick cost-impact view for remedial works, prioritize interventions by cost-effectiveness, and provide procurement checklist for emergency repairs.`,
+  'exp19': `ROLE: Ahli Tenaga Kerja Bangunan Tinggi (TKBT) level 1 & 2
+RESPONSIBILITIES: Work-at-height rescue, harnessing, anchor inspections.
+REQUIREMENTS: Provide SOP for safe access/egress at height, rescue steps, and verification checks for harnesses & anchors.`,
+  'exp20': `ROLE: Ahli Tenaga Kerja pada Ketinggian (TKPK) levels 1–3
+RESPONSIBILITIES: Advanced rope access, high-risk rescue, complex suspended work.
+REQUIREMENTS: Provide advanced SOP for high-altitude operations, rescue sequencing, equipment checklist, and criteria to stop work.`,
+  'exp21': `ROLE: Ahli K3 Spesialis Penanggulangan Kebakaran Tingkat A (Firefighting Level A)
+RESPONSIBILITIES: Advanced firefighting tactics, incident command, foam/chemical suppression.
+REQUIREMENTS: Provide SOP for serious fire incidents, command structure, firefighting tactics appropriate for industrial settings, and debrief checklist.`
+};
+
+/* ---------- Render groups + experts ---------- */
+const groupsContainer = document.getElementById('groupsContainer');
+GROUPS.forEach(g=>{
+  const grp = document.createElement('div'); grp.className='group';
+  const header = document.createElement('div'); header.className='group-header';
+  header.innerHTML = `<div><div class="group-title">${g.title}</div><div class="group-sub">${g.sub}</div></div><div style="display:flex;align-items:center;gap:8px"><div class="muted">${g.ids.length} items</div><svg class="chev" width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M7 10l5 5 5-5z"/></svg></div>`;
+  const body = document.createElement('div'); body.className='group-body';
+  const grid = document.createElement('div'); grid.className='expert-grid';
+  g.ids.forEach(x=>{
+    const item = document.createElement('label'); item.className='expert-item';
+    item.innerHTML = `<input type="checkbox" id="${x.id}" value="${x.id}" /><div style="font-size:13px">${x.label}</div>`;
+    grid.appendChild(item);
+  });
+  body.appendChild(grid);
+  header.addEventListener('click', ()=>{ const open = body.classList.toggle('open'); header.querySelector('.chev').style.transform = open ? 'rotate(180deg)' : 'rotate(0deg)'; });
+  grp.appendChild(header); grp.appendChild(body); groupsContainer.appendChild(grp);
+});
+
+/* ---------- Presets (localStorage) ---------- */
+const PRESET_KEY = 'prompt_presets_v3';
+function loadPresets(){ try{ return JSON.parse(localStorage.getItem(PRESET_KEY)||'{}'); }catch(e){return{};} }
+function savePresets(p){ localStorage.setItem(PRESET_KEY, JSON.stringify(p)); }
+function renderPresetList(){ const el=document.getElementById('presetList'); const p=loadPresets(); el.innerHTML=''; const keys=Object.keys(p); if(keys.length===0){ el.innerHTML='<div class="muted">Belum ada preset.</div>'; return; } keys.forEach(k=>{ const r=document.createElement('div'); r.style.display='flex'; r.style.justifyContent='space-between'; r.style.alignItems='center'; r.style.padding='6px 4px'; r.innerHTML=`<div>${k}</div><div><input type="radio" name="preset" value="${k}"></div>`; el.appendChild(r); }); }
+renderPresetList();
+
+document.getElementById('savePresetBtn').addEventListener('click', ()=>{
+  const name = document.getElementById('presetName').value.trim();
+  if(!name) return alert('Masukkan nama preset.');
+  const checked = Array.from(document.querySelectorAll('.expert-item input[type="checkbox"]:checked')).map(i=>i.id);
+  if(checked.length===0) return alert('Pilih minimal 1 expert.');
+  const presets = loadPresets(); presets[name]=checked; savePresets(presets); renderPresetList(); document.getElementById('presetName').value=''; alert('Preset disimpan: '+name);
+});
+document.getElementById('applyPresetBtn').addEventListener('click', ()=>{
+  const sel = document.querySelector('input[name="preset"]:checked'); if(!sel) return alert('Pilih preset dulu.'); const presets=loadPresets(); const arr=presets[sel.value]||[]; document.querySelectorAll('.expert-item input[type="checkbox"]').forEach(c=>c.checked=false); arr.forEach(id=>{ const el=document.getElementById(id); if(el) el.checked=true; }); alert('Preset diterapkan: '+sel.value);
+});
+document.getElementById('deletePresetBtn').addEventListener('click', ()=>{
+  const sel = document.querySelector('input[name="preset"]:checked'); if(!sel) return alert('Pilih preset untuk dihapus'); const p=loadPresets(); delete p[sel.value]; savePresets(p); renderPresetList(); alert('Preset dihapus: '+sel.value);
+});
+document.getElementById('exportPresetBtn').addEventListener('click', ()=>{
+  const sel = document.querySelector('input[name="preset"]:checked'); if(!sel) return alert('Pilih preset untuk diexport'); const p=loadPresets(); const data={name:sel.value,experts:p[sel.value]}; const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=`${sel.value.replace(/\s+/g,'_')}_preset.json`; a.click(); URL.revokeObjectURL(url);
+});
+document.getElementById('importPresetFile').addEventListener('change', function(e){ const f=e.target.files[0]; if(!f) return; const fr=new FileReader(); fr.onload=function(){ try{ const d=JSON.parse(fr.result); if(!d.name||!Array.isArray(d.experts)) return alert('Format preset invalid'); const p=loadPresets(); p[d.name]=d.experts; savePresets(p); renderPresetList(); alert('Preset diimport: '+d.name); }catch(err){ alert('Gagal import: '+err.message);} }; fr.readAsText(f); });
+
+/* ---------- File & EXIF handling ---------- */
+const cameraInput = document.getElementById('cameraInput');
+const galleryInput = document.getElementById('galleryInput');
+const preview = document.getElementById('preview');
+let lastImageFile = null;
+
+cameraInput.addEventListener('change', handleFile);
+galleryInput.addEventListener('change', handleFile);
+
+function handleFile(e){ const f=e.target.files[0]; if(!f) return; lastImageFile=f; preview.src=URL.createObjectURL(f); preview.style.display='block'; // try EXIF if available
+  if(window.EXIF && EXIF.getData){ EXIF.getData(f, function(){ try{ const lat = EXIF.getTag(this,'GPSLatitude'); const lon = EXIF.getTag(this,'GPSLongitude'); const latRef = EXIF.getTag(this,'GPSLatitudeRef'); const lonRef = EXIF.getTag(this,'GPSLongitudeRef'); const dt = EXIF.getTag(this,'DateTimeOriginal') || EXIF.getTag(this,'DateTime'); if(lat && lon) document.getElementById('lat').value = dmsToDeg(lat, latRef); if(dt) document.getElementById('timestamp').value = dt.replace(/^(\d{4}):(\d{2}):(\d{2})/,'$1-$2-$3'); }catch(e){} }); } else { document.getElementById('timestamp').value = new Date().toISOString(); } }
+
+function dmsToDeg(dms, ref){ try{ const d=dms[0].numerator/dms[0].denominator; const m=dms[1].numerator/dms[1].denominator; const s=dms[2].numerator/dms[2].denominator; let dd=d + m/60 + s/3600; if(ref==='S'||ref==='W') dd=-dd; return dd.toFixed(6);}catch(e){return'';} }
+
+/* ---------- Robust geolocation handler (fixed) ---------- */
+document.getElementById('getGeoBtn').addEventListener('click', async () => {
+  const btn = document.getElementById('getGeoBtn');
+  if (!('geolocation' in navigator)) { alert('Geolocation tidak didukung oleh browser ini.'); return; }
+  if (location.protocol === 'file:') {
+    if (!confirm('Anda membuka file lokal (file://). Geolocation sering diblokir. Lanjutkan? (Saran: jalankan lewat localhost atau GitHub Pages)')) return;
+  }
+  btn.disabled = true;
+  const original = btn.textContent;
+  btn.textContent = 'Meminta izin lokasi...';
+  try {
+    if (navigator.permissions && navigator.permissions.query) {
+      const perm = await navigator.permissions.query({ name: 'geolocation' });
+      if (perm.state === 'denied') {
+        btn.disabled = false; btn.textContent = original;
+        alert('Izin lokasi ditolak. Aktifkan izin lokasi di pengaturan browser untuk domain ini.');
+        return;
+      }
+    }
+  } catch(e){}
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      try {
+        const lat = pos.coords.latitude; const lon = pos.coords.longitude;
+        document.getElementById('lat').value = lat.toFixed(6); document.getElementById('lon').value = lon.toFixed(6);
+      } catch(err) { console.error(err); }
+      btn.disabled = false; btn.textContent = original;
+    },
+    (err) => {
+      btn.disabled = false; btn.textContent = original;
+      switch(err.code){
+        case err.PERMISSION_DENIED: alert('Izin lokasi ditolak oleh pengguna. Aktifkan izin di pengaturan.'); break;
+        case err.POSITION_UNAVAILABLE: alert('Lokasi tidak tersedia. Pastikan GPS menyala dan sinyal cukup.'); break;
+        case err.TIMEOUT: alert('Permintaan lokasi timed out. Coba lagi.'); break;
+        default: alert('Gagal ambil lokasi: ' + (err.message || 'Unknown')); break;
+      }
+    },
+    { enableHighAccuracy: true, timeout: 15000, maximumAge: 5000 }
+  );
+});
+
+/* ---------- Prompt assembly (System normal/aggressive) ---------- */
+const SYSTEM_NORMAL = `You are SECURE-EXPERTS-AGGREGATOR — an ensemble of certified senior professionals and trainers.
+Always answer in Indonesian. Be professional, concise but complete, and strictly evidence-aware.
+Rules: (see instructions in the UI)`;
+const SYSTEM_AGG = `You are SECURE-EXPERTS-AGGREGATOR — authoritative ensemble of certified senior professionals and trainers. Answer in Indonesian. BE DIRECT, DECISIVE, ACTION-FOCUSED.`;
+
+function buildSystemPrompt(aggr){ return aggr ? SYSTEM_AGG : SYSTEM_NORMAL; }
+
+document.getElementById('generateBtn').addEventListener('click', ()=>{
+  // collect checked experts
+  const checked = Array.from(document.querySelectorAll('.expert-item input[type="checkbox"]:checked')).map(i=>i.id);
+  if(checked.length===0 && !confirm('Tidak ada expert dipilih. Lanjutkan dengan perspektif umum?')) return;
+  // assemble blocks
+  const includeBlocks = checked.map(id => EXPERT_BLOCKS[id] ? EXPERT_BLOCKS[id] : (`ROLE: ${id}\nREQUIREMENTS: ...`)).join('\n\n');
+  const ctx = {
+    timestamp: document.getElementById('timestamp').value || new Date().toISOString(),
+    location: (document.getElementById('lat').value && document.getElementById('lon').value) ? {lat: document.getElementById('lat').value, lon: document.getElementById('lon').value, label: document.getElementById('place').value||''} : null,
+    image_attached: lastImageFile ? 'Ya' : 'Tidak',
+    image_summary: lastImageFile ? 'Foto terlampir' : 'Tidak ada foto',
+    notes: document.getElementById('note').value || ''
+  };
+  const userParts = [];
+  userParts.push('STRUCTURED_CONTEXT:');
+  userParts.push(JSON.stringify(ctx, null, 2));
+  userParts.push('\nINCLUDE EXPERT ROLES:');
+  userParts.push(includeBlocks || '[No expert blocks selected — use general security perspective]');
+  userParts.push('\nINSTRUCTIONS (to LLM):');
+  userParts.push(`Buat: Analisa per Ahli (2-4 kalimat), SOP Utama (immediate actions + step-by-step), Protap, Rujukan & Verifikasi, Evidence requested, Decision checklist. Output must start with JSON block (schema) then human-readable report.`);
+  const userMessage = userParts.join('\n\n');
+  const systemPrompt = buildSystemPrompt(document.getElementById('aggressiveToggle').checked);
+  const combined = `--- SYSTEM MESSAGE (paste as system role) ---\n${systemPrompt}\n\n--- USER MESSAGE (paste as user message) ---\n${userMessage}`;
+  document.getElementById('promptOutput').value = combined;
+});
+
+/* copy buttons */
+document.getElementById('copyPromptBtn').addEventListener('click', ()=>{
+  const txt = document.getElementById('promptOutput').value; if(!txt) return alert('Generate dulu.');
+  const idx = txt.indexOf('--- USER MESSAGE (paste as user message) ---');
+  const userPart = idx>=0 ? txt.slice(idx + '--- USER MESSAGE (paste as user message) ---'.length).trim() : txt;
+  navigator.clipboard.writeText(userPart).then(()=> alert('User prompt disalin.'));
+});
+document.getElementById('copyBothBtn').addEventListener('click', ()=>{
+  const txt = document.getElementById('promptOutput').value; if(!txt) return alert('Generate dulu.');
+  navigator.clipboard.writeText(txt).then(()=> alert('System + User disalin.'));
+});
+
+/* mock & download & clear */
+document.getElementById('mockBtn').addEventListener('click', ()=>{
+  document.getElementById('promptOutput').value = `{
+  "risk_level":"medium",
+  "risk_score":60,
+  "analisa_per_ahli":[{"expert":"Security","summary":"...","recommended_immediate_actions":["..."],"confidence":80}],
+  "sop_utama":{"immediate_actions":["..."],"sop_steps":["1...","2..."],"protap_recommendations":["..."]},
+  "references":["Periksa Peraturan Menteri & SNI"],
+  "evidence_requested":["Foto wide-angle","Timestamp"],
+  "decision_checklist":["Amankan area","Rekam bukti","Hubungi patroli"],
+  "confidence_overall":75,
+  "verification_notes":"Verifikasi hukum ke sumber resmi."
+}
+
+--- HUMAN-READABLE REPORT ---
+Risk Level & Score: MEDIUM (60)
+Analisa per Ahli:
+- Security: ...
+SOP Utama:
+1) ...
+`;
+});
+document.getElementById('downloadBtn').addEventListener('click', ()=>{
+  const txt=document.getElementById('promptOutput').value; if(!txt) return alert('Generate dulu.');
+  const blob=new Blob([txt],{type:'text/plain'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='prompt.txt'; a.click(); URL.revokeObjectURL(url);
+});
+
+/* init: nothing else needed */
+</script>
+</body>
+</html>
