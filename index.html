@@ -1,1239 +1,402 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>AI Security SOP Generator — DEEPSEEK PRO EDITION</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Security Prompt Maker v4 — PWA Patrol & Prompt Builder</title>
 
-  <style>
-    /* ===== DEEPSEEK ENHANCED STYLES ===== */
-    :root {
-      --primary: #0b3b66;
-      --secondary: #0b6b44;
-      --accent: #ff8c42;
-      --danger: #ff4757;
-      --success: #2ed573;
-      --warning: #ffa502;
-      --dark: #2f3542;
-      --light: #f4f7fb;
-      --white: #ffffff;
-      --shadow: 0 4px 12px rgba(10,20,30,0.15);
-      --radius: 12px;
-      --transition: all 0.3s ease;
-    }
+<!-- Libraries -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exif-js/2.3.0/exif.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@vladmandic/human/dist/human.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-    * { 
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    html, body {
-      height: 100%;
-      font-family: 'Segoe UI', system-ui, -apple-system, Roboto, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: #2f3542;
-      -webkit-tap-highlight-color: transparent;
-      overflow-x: hidden;
-    }
-
-    body {
-      background-attachment: fixed;
-      padding: 8px;
-    }
-
-    /* Header dengan glass morphism */
-    header {
-      background: rgba(255, 255, 255, 0.25);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.18);
-      color: var(--dark);
-      padding: 16px 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-radius: var(--radius);
-      margin-bottom: 16px;
-      box-shadow: var(--shadow);
-      position: relative;
-      z-index: 100;
-    }
-
-    header h1 {
-      margin: 0;
-      font-size: 20px;
-      font-weight: 700;
-      background: linear-gradient(135deg, #0b3b66, #0b6b44);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    .top-controls {
-      display: flex;
-      gap: 12px;
-      align-items: center;
-    }
-
-    /* Main container dengan glass effect */
-    main {
-      max-width: 1200px;
-      margin: 0 auto;
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 16px;
-      position: relative;
-      z-index: 1;
-    }
-
-    @media (min-width: 1024px) {
-      main {
-        grid-template-columns: 1fr 1fr;
-        grid-template-areas: 
-          "camera analysis"
-          "editor history";
-      }
-      #cameraSection { grid-area: camera; }
-      #resultSection { grid-area: analysis; }
-      #editorSection { grid-area: editor; }
-      #historySection { grid-area: history; }
-    }
-
-    /* Card design yang modern */
-    .card {
-      background: rgba(255, 255, 255, 0.9);
-      backdrop-filter: blur(15px);
-      -webkit-backdrop-filter: blur(15px);
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      border-radius: var(--radius);
-      padding: 20px;
-      box-shadow: var(--shadow);
-      transition: var(--transition);
-    }
-
-    .card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 8px 25px rgba(10,20,30,0.2);
-    }
-
-    .card h2 {
-      margin-bottom: 16px;
-      font-size: 18px;
-      color: var(--primary);
-      border-bottom: 2px solid var(--primary);
-      padding-bottom: 8px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .card h2::before {
-      content: "🔒";
-      font-size: 16px;
-    }
-
-    /* Video styling */
-    #video {
-      width: 100%;
-      height: auto;
-      background: linear-gradient(45deg, #2c3e50, #4ca1af);
-      border-radius: var(--radius);
-      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-      transition: var(--transition);
-    }
-
-    #video:hover {
-      transform: scale(1.02);
-    }
-
-    /* Button system yang robust */
-    button {
-      padding: 12px 16px;
-      border: none;
-      border-radius: var(--radius);
-      background: linear-gradient(135deg, var(--secondary), #0a8c5a);
-      color: var(--white);
-      font-weight: 600;
-      cursor: pointer;
-      transition: var(--transition);
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 14px;
-      box-shadow: 0 2px 8px rgba(11, 107, 68, 0.3);
-    }
-
-    button::before {
-      font-size: 14px;
-    }
-
-    button:hover:not([disabled]) {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(11, 107, 68, 0.4);
-      background: linear-gradient(135deg, #0a8c5a, var(--secondary));
-    }
-
-    button:active:not([disabled]) {
-      transform: translateY(0);
-    }
-
-    button[disabled] {
-      opacity: 0.6;
-      cursor: not-allowed;
-      transform: none !important;
-      background: #95a5a6;
-    }
-
-    /* Specific button icons */
-    #startBtn::before { content: "📷"; }
-    #snapBtn::before { content: "⭕"; }
-    #analyzeBtn::before { content: "🤖"; }
-    #generateBtn::before { content: "⚡"; }
-    #exportPdfBtn::before { content: "📄"; }
-    #saveJsonBtn::before { content: "💾"; }
-    #copyClipboardBtn::before { content: "📋"; }
-
-    /* Camera controls grid */
-    .camera-controls {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-      gap: 10px;
-      margin-top: 12px;
-    }
-
-    /* Form elements */
-    input, select, textarea {
-      padding: 12px;
-      border-radius: var(--radius);
-      border: 2px solid #e0e6ef;
-      background: var(--white);
-      font-family: inherit;
-      font-size: 14px;
-      transition: var(--transition);
-      width: 100%;
-    }
-
-    input:focus, select:focus, textarea:focus {
-      outline: none;
-      border-color: var(--secondary);
-      box-shadow: 0 0 0 3px rgba(11, 107, 68, 0.1);
-    }
-
-    /* Analysis cards */
-    .analysis-card {
-      background: linear-gradient(135deg, #74b9ff, #0984e3);
-      color: white;
-      padding: 16px;
-      border-radius: var(--radius);
-      margin-bottom: 12px;
-      box-shadow: 0 4px 15px rgba(116, 185, 255, 0.3);
-      transition: var(--transition);
-      border-left: 4px solid var(--success);
-    }
-
-    .analysis-card:hover {
-      transform: translateX(5px);
-    }
-
-    .analysis-card h3 {
-      margin: 0 0 8px 0;
-      font-size: 16px;
-    }
-
-    .analysis-card .score {
-      font-weight: bold;
-      background: rgba(255,255,255,0.2);
-      padding: 2px 8px;
-      border-radius: 20px;
-    }
-
-    /* Flex utilities */
-    .flex-row {
-      display: flex;
-      gap: 10px;
-      align-items: center;
-      flex-wrap: wrap;
-    }
-
-    .meta-row {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 10px;
-      margin-bottom: 16px;
-    }
-
-    /* Modal enhanced */
-    .modal {
-      position: fixed;
-      inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: rgba(0,0,0,0.7);
-      backdrop-filter: blur(5px);
-      z-index: 10000;
-      padding: 20px;
-      opacity: 1;
-      transition: opacity 0.3s ease;
-    }
-
-    .modal.hidden {
-      opacity: 0;
-      pointer-events: none;
-    }
-
-    .modal-content {
-      background: var(--white);
-      padding: 24px;
-      border-radius: var(--radius);
-      width: 100%;
-      max-width: 500px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-      transform: scale(1);
-      transition: transform 0.3s ease;
-    }
-
-    .modal.hidden .modal-content {
-      transform: scale(0.7);
-    }
-
-    /* History items */
-    .history-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 12px;
-      border-bottom: 1px solid rgba(0,0,0,0.1);
-      transition: var(--transition);
-    }
-
-    .history-item:hover {
-      background: rgba(116, 185, 255, 0.1);
-      border-radius: var(--radius);
-    }
-
-    /* Progress indicator */
-    .progress-bar {
-      height: 4px;
-      background: linear-gradient(90deg, var(--secondary), var(--success));
-      border-radius: 2px;
-      margin-top: 8px;
-      transition: width 0.3s ease;
-    }
-
-    /* Notification system */
-    .notification {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      padding: 16px 20px;
-      background: var(--success);
-      color: white;
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      z-index: 10001;
-      transform: translateX(400px);
-      transition: transform 0.4s ease;
-      max-width: 300px;
-    }
-
-    .notification.show {
-      transform: translateX(0);
-    }
-
-    /* Loading animation */
-    .loader {
-      display: inline-block;
-      width: 20px;
-      height: 20px;
-      border: 3px solid rgba(255,255,255,.3);
-      border-radius: 50%;
-      border-top-color: var(--white);
-      animation: spin 1s ease-in-out infinite;
-    }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-
-    /* Footer */
-    footer {
-      text-align: center;
-      padding: 20px;
-      margin-top: 30px;
-      color: rgba(255,255,255,0.8);
-      font-size: 14px;
-    }
-
-    /* Debug button */
-    #overlayDebug {
-      position: fixed;
-      right: 20px;
-      bottom: 20px;
-      z-index: 10001;
-      background: var(--danger);
-      padding: 10px 14px;
-      border-radius: var(--radius);
-      color: white;
-      border: none;
-      opacity: 0.9;
-      font-size: 12px;
-    }
-
-    /* Responsive improvements */
-    @media (max-width: 768px) {
-      .camera-controls {
-        grid-template-columns: 1fr;
-      }
-      
-      .meta-row {
-        grid-template-columns: 1fr;
-      }
-      
-      .flex-row {
-        flex-direction: column;
-        align-items: stretch;
-      }
-      
-      button {
-        justify-content: center;
-      }
-    }
-
-    /* Dark mode support */
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --light: #2d3436;
-        --white: #2d3436;
-        --dark: #dfe6e9;
-      }
-    }
-  
-.modal.hidden { display: none !important; opacity: 0 !important; pointer-events: none !important; }
+<style>
+  :root{font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif}
+  body{margin:0;padding:18px;background:#f4f6fb;color:#111}
+  header{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+  h1{font-size:18px;margin:0}
+  .row{display:flex;gap:12px;align-items:flex-start}
+  .col{background:#fff;padding:12px;border-radius:10px;box-shadow:0 2px 6px rgba(0,0,0,0.06)}
+  .left{flex:1;min-width:320px}
+  .right{width:420px}
+  input,textarea,select,button{width:100%;padding:8px;margin-top:8px;border-radius:8px;border:1px solid #d0d6e0}
+  button{cursor:pointer;background:#1155ff;color:#fff;border:none}
+  #preview{max-width:280px;border-radius:10px;display:block;margin-top:8px}
+  #map{height:300px;border-radius:8px;margin-top:8px}
+  textarea{height:140px;white-space:pre-wrap}
+  table{width:100%;border-collapse:collapse;margin-top:8px}
+  td,th{padding:6px;border-bottom:1px solid #eee;font-size:13px}
+  .badge{display:inline-block;padding:4px 8px;border-radius:999px;background:#e8f0ff;color:#083b8a;font-weight:600}
+  .muted{color:#666;font-size:13px}
 </style>
-
-  <!-- html2pdf for client-side PDF export -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.min.js"></script>
 </head>
 <body>
-  <!-- Notification System -->
-  <div id="notification" class="notification" style="display: none;"></div>
+<header>
+  <div>
+    <h1>Security Prompt Maker v4 — Patrol PWA</h1>
+    <div class="muted">Ambil foto → analyze offline → batch patrol → generate prompt & voice</div>
+  </div>
+  <div style="margin-left:auto">
+    <span class="badge">PWA Offline</span>
+  </div>
+</header>
 
-  <header>
-    <h1>🛡️ AI Security SOP Generator — DEEPSEEK PRO</h1>
-    <div class="top-controls">
-      <label for="langToggle" style="color:var(--dark)">ID/EN</label>
-      <select id="langToggle" aria-label="Language toggle">
-        <option value="id" selected>🇮🇩 Indonesia</option>
-        <option value="en">🇺🇸 English</option>
-      </select>
-      <button id="privacyBtn" title="Privacy & settings" style="background:linear-gradient(135deg, var(--accent), #e67e22)">🔒 Privacy</button>
+<div class="row">
+  <div class="col left">
+    <label><strong>1) Ambil / Upload Foto</strong></label>
+    <input id="fileInput" type="file" accept="image/*" capture="environment" multiple />
+    <img id="preview" style="display:none"/>
+    <div class="muted">Pilih satu atau beberapa file untuk menambah ke rute patroli.</div>
+
+    <label><strong>2) Metadata (otomatis)</strong></label>
+    <input id="lat" placeholder="Latitude">
+    <input id="lon" placeholder="Longitude">
+    <input id="timestamp" placeholder="Timestamp">
+    <input id="place" placeholder="Place (reverse geocode)">
+    <select id="areaType">
+      <option>Gate / Gerbang</option><option>Parkiran</option><option>Lorong / Koridor</option>
+      <option>Gudang / Industri</option><option>Jalan / Publik</option><option>Area Lainnya</option>
+    </select>
+    <input id="lightInfo" placeholder="Light analysis (auto)">
+
+    <label><strong>3) Object Detection & Risk</strong></label>
+    <textarea id="objInfo" placeholder="Object detection results (auto)"></textarea>
+    <textarea id="riskInfo" placeholder="Risk analysis (auto)"></textarea>
+    <textarea id="crimeInfo" placeholder="Crime history (mock / manual)"></textarea>
+
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <button id="addPatrolBtn">+ Add to Patrol</button>
+      <button id="analyzeAllBtn">Analyze Batch</button>
     </div>
-  </header>
 
-  <main>
-    <!-- CAMERA SECTION -->
-    <section id="cameraSection" class="card">
-      <h2>📷 Layar Kamera</h2>
-      <video id="video" playsinline autoplay muted></video>
-      <div class="progress-bar" id="cameraProgress" style="width: 0%"></div>
-      
-      <div class="camera-controls">
-        <button id="startBtn" type="button">Aktifkan Kamera</button>
-        <button id="snapBtn" disabled type="button">Ambil Snapshot</button>
-        <button id="analyzeBtn" disabled type="button">Analisa Sekarang</button>
-        <label style="display:flex;align-items:center;gap:6px;padding:8px;background:rgba(0,0,0,0.05);border-radius:var(--radius);">
-          <input type="checkbox" id="remoteToggle"> 📤 Upload remote
-        </label>
-        <button id="downloadSnapshotBtn" type="button" style="background:linear-gradient(135deg, #3498db, #2980b9)">📥 Download Snapshot</button>
-      </div>
-      <canvas id="snapshotCanvas" hidden></canvas>
-    </section>
-
-    <!-- ANALYSIS SECTION -->
-    <section id="resultSection" class="card">
-      <h2>🔍 Hasil Analisis</h2>
-      <div id="analysisCards" aria-live="polite"></div>
-
-      <div id="manualOverride" style="margin-top:16px;display:none">
-        <label for="manualSelect"><strong>Manual pilih kategori:</strong></label>
-        <div class="flex-row" style="margin-top:10px">
-          <select id="manualSelect" style="flex:1"></select>
-          <button id="applyManualBtn" type="button" style="background:linear-gradient(135deg, #e74c3c, #c0392b)">✅ Pilih</button>
-        </div>
-      </div>
-    </section>
-
-    <!-- EDITOR SECTION -->
-    <section id="editorSection" class="card">
-      <h2>✏️ Editor SOP</h2>
-      <div class="meta-row">
-        <input id="locationName" placeholder="🏢 Nama Lokasi (mis. Gerbang Utama)" />
-        <input id="dateField" type="date" />
-        <select id="versionSelect">
-          <option>v1.0</option>
-          <option>v1.1</option>
-          <option>v2.0</option>
-          <option>v2.1</option>
-        </select>
-      </div>
-
-      <div style="margin-bottom:16px">
-        <label><strong>📝 Template SOP (editable)</strong></label>
-        <textarea id="sopEditor" placeholder="SOP akan terisi otomatis setelah analisis..." rows="8"></textarea>
-      </div>
-
-      <div style="margin-bottom:16px">
-        <label><strong>✅ Checklist</strong></label>
-        <div id="checklist"></div>
-      </div>
-
-      <div class="flex-row">
-        <button id="generateBtn">⚡ Generate SOP</button>
-        <button id="exportPdfBtn" disabled>📄 Export PDF</button>
-        <button id="saveJsonBtn" type="button">💾 Simpan JSON</button>
-        <button id="copyClipboardBtn" type="button">📋 Copy</button>
-      </div>
-    </section>
-
-    <!-- HISTORY SECTION -->
-    <section id="historySection" class="card">
-      <h2>📊 History Analisis</h2>
-      <div id="historyList"></div>
-      <div style="margin-top:16px" class="flex-row">
-        <button id="clearHistoryBtn" type="button" style="background:linear-gradient(135deg, var(--danger), #c23616)">🗑️ Hapus History</button>
-        <button id="exportHistoryBtn" type="button" style="background:linear-gradient(135deg, #9b59b6, #8e44ad)">📤 Export History</button>
-      </div>
-    </section>
-  </main>
-
-  <footer>
-    <div class="card" style="background:rgba(255,255,255,0.1);color:white;backdrop-filter:blur(10px);">
-      <strong>MODE: DEEPSEEK PRO EDITION</strong> — All buttons are 100% clickable with enhanced UX
+    <label style="margin-top:12px"><strong>Patrol List</strong></label>
+    <div id="patrolList"></div>
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <button id="routeBtn">Generate Route (nearest)</button>
+      <button id="exportBtn">Export JSON</button>
     </div>
-  </footer>
 
-  <!-- PRIVACY MODAL -->
-  <div id="privacyModal" class="modal hidden">
-    <div class="modal-content">
-      <h3 style="margin-bottom:16px;color:var(--primary)">🔒 Privacy & Upload Settings</h3>
-      <p style="margin-bottom:16px;line-height:1.5">Default: inference di browser (on-device). Jika mengaktifkan "Upload remote", gambar akan dikirim KE SERVER untuk inferensi. Jangan kirim data sensitif tanpa izin.</p>
-      <label style="display:flex;gap:10px;align-items:center;margin-bottom:16px;padding:12px;background:rgba(11, 107, 68, 0.1);border-radius:var(--radius);">
-        <input type="checkbox" id="confirmRemote"> <strong>Saya mengizinkan upload gambar ke server</strong>
-      </label>
-      <div style="display:flex;gap:10px;justify-content:flex-end">
-        <button id="privacyClose" type="button" style="background:linear-gradient(135deg, #95a5a6, #7f8c8d)">Tutup</button>
-      </div>
-    </div>
   </div>
 
-  <!-- TEMPLATES -->
-  <template id="analysisCardTemplate">
-    <div class="analysis-card">
-      <h3 class="label"></h3>
-      <p>Confidence: <span class="score"></span></p>
-      <div class="progress-bar" style="width: calc(var(--score) * 100%)"></div>
-      <div class="flex-row" style="margin-top:12px">
-        <button class="generateSopBtn" type="button">⚡ Generate SOP</button>
-        <button class="viewSnapBtn" type="button" style="background:linear-gradient(135deg, #3498db, #2980b9)">👁️ Lihat Snapshot</button>
-      </div>
+  <div class="col right">
+    <label><strong>Map & Route</strong></label>
+    <div id="map"></div>
+
+    <label style="margin-top:8px"><strong>Dashboard / Summary</strong></label>
+    <table id="summaryTable">
+      <thead><tr><th>Point</th><th>Risk</th><th>Action</th></tr></thead>
+      <tbody></tbody>
+    </table>
+
+    <label style="margin-top:8px"><strong>Prompt Builder (batch)</strong></label>
+    <textarea id="promptOutput" placeholder="Prompt will appear here"></textarea>
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <button id="copyPromptBtn">Copy Prompt</button>
+      <button id="speakBtn">🔊 Speak Prompt</button>
     </div>
-  </template>
+  </div>
+</div>
 
-  <!-- ========== ENHANCED SCRIPT ========== -->
-  <script>
-  (function(){
-    'use strict';
+<script>
+// ============ Storage structures ============
+let patrolPoints = []; // {id, lat, lon, ts, place, areaType, light, obj, risk, crime, imgDataUrl}
+let selectedImageDataUrl = null;
 
-    /* ========= ENHANCED STATE MANAGEMENT ========= */
-    const CATEGORIES = [
-      "Gerbang Utama", "Gerbang Samping", "Pintu Masuk", "Resepsionis/Lobby", 
-      "Ruang Server", "Pabrik", "Parkiran", "Tangga Darurat", 
-      "Lift", "Kamar Hotel", "Koridor/Apartemen", "Gudang"
-    ];
-    
-    const CONF_THRESHOLD = 0.6;
-    const HISTORY_KEY = 'ai_sop_history_deepseek_pro';
+// ============ Initialize map ============
+const map = L.map('map', {zoomControl:true}).setView([-6.2,106.8], 12);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap contributors'}).addTo(map);
+let routeLayer = L.layerGroup().addTo(map);
 
-    // Enhanced element selection
-    const elements = {
-      video: document.getElementById('video'),
-      startBtn: document.getElementById('startBtn'),
-      snapBtn: document.getElementById('snapBtn'),
-      analyzeBtn: document.getElementById('analyzeBtn'),
-      snapshotCanvas: document.getElementById('snapshotCanvas'),
-      analysisCards: document.getElementById('analysisCards'),
-      manualOverride: document.getElementById('manualOverride'),
-      manualSelect: document.getElementById('manualSelect'),
-      applyManualBtn: document.getElementById('applyManualBtn'),
-      sopEditor: document.getElementById('sopEditor'),
-      locationName: document.getElementById('locationName'),
-      dateField: document.getElementById('dateField'),
-      versionSelect: document.getElementById('versionSelect'),
-      checklistDiv: document.getElementById('checklist'),
-      generateBtn: document.getElementById('generateBtn'),
-      exportPdfBtn: document.getElementById('exportPdfBtn'),
-      saveJsonBtn: document.getElementById('saveJsonBtn'),
-      copyClipboardBtn: document.getElementById('copyClipboardBtn'),
-      historyList: document.getElementById('historyList'),
-      clearHistoryBtn: document.getElementById('clearHistoryBtn'),
-      exportHistoryBtn: document.getElementById('exportHistoryBtn'),
-      remoteToggle: document.getElementById('remoteToggle'),
-      privacyBtn: document.getElementById('privacyBtn'),
-      privacyModal: document.getElementById('privacyModal'),
-      privacyClose: document.getElementById('privacyClose'),
-      confirmRemote: document.getElementById('confirmRemote'),
-      downloadSnapshotBtn: document.getElementById('downloadSnapshotBtn'),
-      langToggle: document.getElementById('langToggle'),
-      overlayDebug: document.getElementById('overlayDebug'),
-      notification: document.getElementById('notification'),
-      cameraProgress: document.getElementById('cameraProgress')
-    };
+// ============ Human.js init for object detection ============
+const human = new Human({
+  modelBasePath: "https://cdn.jsdelivr.net/npm/@vladmandic/human/models",
+  detect: { object: { enabled: true }, face: { enabled: false } }
+});
+(async()=>{ await human.load(); await human.warmup(); })();
 
-    // Enhanced state
-    let stream = null;
-    let lastSnapshotDataUrl = null;
-    let lastAnalysisResults = [];
-    let worker = null;
+// ============ Helpers ============
+function uid(prefix='p'){return prefix+Math.random().toString(36).slice(2,9)}
+function toDataURL(file){ return new Promise(r=>{
+  const fr = new FileReader(); fr.onload = ()=> r(fr.result); fr.readAsDataURL(file);
+});}
 
-    /* ========= NOTIFICATION SYSTEM ========= */
-    function showNotification(message, type = 'success', duration = 3000) {
-      const notification = elements.notification;
-      notification.textContent = message;
-      notification.style.background = type === 'error' ? 
-        'linear-gradient(135deg, var(--danger), #c23616)' :
-        'linear-gradient(135deg, var(--success), #27ae60)';
-      
-      notification.style.display = 'block';
-      notification.classList.add('show');
-      
-      setTimeout(() => {
-        notification.classList.remove('show');
-        setTimeout(() => notification.style.display = 'none', 400);
-      }, duration);
+function analyzeBrightness(img){
+  const c = document.createElement('canvas'), ctx = c.getContext('2d');
+  c.width = img.naturalWidth; c.height = img.naturalHeight;
+  ctx.drawImage(img,0,0);
+  const data = ctx.getImageData(0,0,c.width,c.height).data;
+  let sum=0; for(let i=0;i<data.length;i+=4) sum += data[i];
+  const avg = sum/(data.length/4);
+  if(avg<60) return "Gelap"; if(avg<120) return "Redup"; return "Terang";
+}
+
+// EXIF GPS -> decimal
+function dmsToDec(dms, ref){
+  const d = dms[0].numerator / dms[0].denominator;
+  const m = dms[1].numerator / dms[1].denominator;
+  const s = dms[2].numerator / dms[2].denominator;
+  let dd = d + m/60 + s/3600; if(ref==='S'||ref==='W') dd = -dd;
+  return dd.toFixed(6);
+}
+
+// reverse geocode (nominatim)
+async function reverseGeo(lat, lon){
+  try{
+    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
+    if(!res.ok) return null;
+    const js = await res.json();
+    return js.display_name || null;
+  }catch(e){ return null; }
+}
+
+// simple crime mock based on place keywords
+function crimeMock(place){
+  place = (place||'').toLowerCase();
+  if(place.includes('pulo gadung')) return 'Catatan: beberapa laporan pencurian kendaraan dan akses ilegal malam hari.';
+  if(place.includes('terminal')||place.includes('stasiun')) return 'Catatan: pencopetan dan kehilangan barang sering terjadi.';
+  return 'Tidak ada catatan publik otomatis (gunakan data internal untuk akurasi).';
+}
+
+// risk engine: combine rules and detection
+function computeRisk({areaType, light, objList, crimeText}){
+  let score = 10; let reasons = [];
+  if(areaType.toLowerCase().includes('gate')) score += 15, reasons.push('Area gerbang sensitif');
+  if(light==='Gelap') score += 20, reasons.push('Cahaya rendah');
+  if(objList.some(o=>o.label==='person')) {
+    const people = objList.filter(o=>o.label==='person').length;
+    if(people > 3) score += 20, reasons.push('Kerumunan terdeteksi');
+    else score += 8, reasons.push('Orang terdeteksi');
+  }
+  if(objList.some(o=>/car|truck|motor|vehicle|bicycle/i.test(o.label))) score += 5, reasons.push('Kendaraan terdeteksi');
+  if(/pencurian|pencopetan|perampasan|theft|steal/i.test(crimeText)) score += 25, reasons.push('Riwayat kriminal lokal');
+  // experimental weapon detection: check label names
+  if(objList.some(o=>/knife|gun|weapon|blade/i.test(o.label))) score += 35, reasons.push('Kemungkinan senjata (eksperimental)');
+  score = Math.min(100, score);
+  return {score, reasons};
+}
+
+// detect objects using human.js
+async function detectObjectsOnImage(imgElement){
+  const res = await human.detect(imgElement);
+  // map results to simpler form
+  const objects = (res.object || []).map(o=>({label:o.label, score:o.score}));
+  return objects;
+}
+
+// update patrol list UI
+function renderPatrolList(){
+  const container = document.getElementById('patrolList');
+  container.innerHTML = '';
+  patrolPoints.forEach(p=>{
+    const el = document.createElement('div');
+    el.style.borderBottom = '1px solid #eee'; el.style.padding='8px 0';
+    el.innerHTML = `<strong>${p.place||'Unknown'}</strong><div class="muted">Risk: ${p.risk.score} — ${p.risk.reasons.join('; ')}</div>
+      <div style="margin-top:6px;display:flex;gap:8px">
+        <button onclick="zoomTo('${p.id}')">Map</button>
+        <button onclick="removePoint('${p.id}')">Remove</button>
+      </div>`;
+    container.appendChild(el);
+  });
+  renderSummary();
+}
+
+// render summary table
+function renderSummary(){
+  const tbody = document.querySelector('#summaryTable tbody');
+  tbody.innerHTML = '';
+  patrolPoints.forEach((p,i)=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${i+1}. ${p.place||p.areaType||'Unknown'}</td><td>${p.risk.score}</td>
+      <td><button onclick="copyPointPrompt('${p.id}')">Copy Prompt</button></td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+// zoom to a point on map
+function zoomTo(id){
+  const p = patrolPoints.find(x=>x.id===id); if(!p) return;
+  map.setView([p.lat,p.lon],18);
+}
+
+// remove point
+function removePoint(id){
+  patrolPoints = patrolPoints.filter(x=>x.id!==id);
+  renderPatrolList();
+  drawRouteOnMap([]);
+}
+
+// draw route (simple nearest neighbor)
+function drawRouteOnMap(order){
+  routeLayer.clearLayers();
+  if(order.length===0) return;
+  const latlngs = order.map(i=>[patrolPoints[i].lat, patrolPoints[i].lon]);
+  L.polyline(latlngs,{color:'blue'}).addTo(routeLayer);
+  patrolPoints.forEach(p=>{
+    L.marker([p.lat,p.lon]).addTo(routeLayer).bindPopup(`${p.place || p.areaType}<br>Risk:${p.risk.score}`);
+  });
+  map.fitBounds(latlngs);
+}
+
+// nearest neighbor ordering
+function computeRouteOrder(){
+  if(patrolPoints.length===0) return [];
+  // greedy: start at first point
+  const pts = patrolPoints.map(p=>[p.lat,p.lon]);
+  const used = new Array(pts.length).fill(false);
+  const order = [0]; used[0]=true;
+  for(let k=1;k<pts.length;k++){
+    const last = pts[order[order.length-1]];
+    let best=-1, bd=Infinity;
+    for(let i=0;i<pts.length;i++) if(!used[i]){
+      const d = (last[0]-pts[i][0])**2+(last[1]-pts[i][1])**2;
+      if(d<bd){ bd=d; best=i; }
     }
+    used[best]=true; order.push(best);
+  }
+  return order;
+}
 
-    /* ========= ENHANCED CAMERA SYSTEM ========= */
-    elements.startBtn.addEventListener('click', async () => {
-      try {
-        elements.startBtn.innerHTML = '<div class="loader"></div> Memulai Kamera...';
-        elements.startBtn.disabled = true;
-        
-        // Simulate progress
-        let progress = 0;
-        const progressInterval = setInterval(() => {
-          progress += 10;
-          elements.cameraProgress.style.width = progress + '%';
-          if (progress >= 90) clearInterval(progressInterval);
-        }, 100);
+// ============ File input handling ============
+document.getElementById('fileInput').addEventListener('change', async function(e){
+  const files = Array.from(e.target.files);
+  if(files.length===0) return;
+  // process first file preview
+  const first = files[0];
+  const dataUrl = await toDataURL(first);
+  selectedImageDataUrl = dataUrl;
+  const imgEl = document.getElementById('preview'); imgEl.src = dataUrl; imgEl.style.display='block';
 
-        stream = await navigator.mediaDevices.getUserMedia({ 
-          video: { 
-            facingMode: 'environment',
-            width: { ideal: 1280 },
-            height: { ideal: 720 }
-          }, 
-          audio: false 
-        });
-        
-        elements.video.srcObject = stream;
-        elements.snapBtn.disabled = false;
-        elements.analyzeBtn.disabled = false;
-        
-        clearInterval(progressInterval);
-        elements.cameraProgress.style.width = '100%';
-        elements.startBtn.innerHTML = '✅ Kamera Aktif';
-        
-        showNotification('Kamera berhasil diaktifkan!', 'success');
-        
-        setTimeout(() => {
-          elements.cameraProgress.style.width = '0%';
-        }, 1000);
-        
-      } catch (error) {
-        console.error('Camera error:', error);
-        elements.startBtn.innerHTML = '📷 Aktifkan Kamera';
-        elements.startBtn.disabled = false;
-        showNotification('Gagal mengakses kamera: ' + error.message, 'error');
-      }
-    });
-
-    /* ========= SNAPSHOT SYSTEM ========= */
-    elements.snapBtn.addEventListener('click', () => takeSnapshot());
-    
-    elements.downloadSnapshotBtn.addEventListener('click', () => {
-      if (!lastSnapshotDataUrl) {
-        showNotification('Belum ada snapshot yang diambil!', 'error');
-        return;
-      }
-      const a = document.createElement('a');
-      a.href = lastSnapshotDataUrl;
-      a.download = `security_snapshot_${new Date().toISOString().slice(0,19)}.jpg`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      showNotification('Snapshot berhasil didownload!', 'success');
-    });
-
-    function takeSnapshot() {
-      if (!elements.video.videoWidth) {
-        showNotification('Video belum siap. Aktifkan kamera terlebih dahulu!', 'error');
-        return;
-      }
-
-      const canvas = elements.snapshotCanvas;
-      const video = elements.video;
-      
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      
-      // Add timestamp to snapshot
-      ctx.font = '16px Arial';
-      ctx.fillStyle = 'white';
-      ctx.strokeStyle = 'black';
-      ctx.lineWidth = 2;
-      const timestamp = new Date().toLocaleString();
-      ctx.strokeText(timestamp, 10, canvas.height - 20);
-      ctx.fillText(timestamp, 10, canvas.height - 20);
-      
-      lastSnapshotDataUrl = canvas.toDataURL('image/jpeg', 0.85);
-      showNotification('Snapshot berhasil diambil! Klik "Analisa Sekarang"', 'success');
-    }
-
-    /* ========= ENHANCED ANALYSIS SYSTEM ========= */
-    elements.analyzeBtn.addEventListener('click', async () => {
-      if (!lastSnapshotDataUrl) {
-        takeSnapshot();
-        if (!lastSnapshotDataUrl) return;
-      }
-
-      if (elements.remoteToggle.checked && !elements.confirmRemote.checked) {
-        showNotification('Harap konfirmasi privacy settings terlebih dahulu!', 'error');
-        elements.privacyModal.classList.remove('hidden');
-        return;
-      }
-
-      elements.analyzeBtn.innerHTML = '<div class="loader"></div> Menganalisa...';
-      elements.analyzeBtn.disabled = true;
-
-      // Simulate AI processing with progress
-      setTimeout(() => {
-        const results = enhancedMockInference();
-        handleAnalysisResults(results);
-        elements.analyzeBtn.innerHTML = '🤖 Analisa Sekarang';
-        elements.analyzeBtn.disabled = false;
-      }, 1500);
-    });
-
-    function enhancedMockInference() {
-      const results = [];
-      const usedCategories = new Set();
-      
-      for (let i = 0; i < 3; i++) {
-        let availableCats = CATEGORIES.filter(cat => !usedCategories.has(cat));
-        if (availableCats.length === 0) availableCats = CATEGORIES;
-        
-        const label = availableCats[Math.floor(Math.random() * availableCats.length)];
-        usedCategories.add(label);
-        
-        // More realistic confidence scores
-        const baseScore = 0.6 + Math.random() * 0.35;
-        const score = Number(baseScore.toFixed(3));
-        
-        results.push({ 
-          label, 
-          score,
-          details: {
-            riskLevel: score > 0.8 ? 'Tinggi' : score > 0.6 ? 'Sedang' : 'Rendah',
-            recommendedActions: generateRecommendedActions(label)
-          }
-        });
-      }
-      
-      // Sort by confidence score
-      return results.sort((a, b) => b.score - a.score);
-    }
-
-    function generateRecommendedActions(category) {
-      const actions = {
-        'Gerbang Utama': ['Verifikasi ID pengunjung', 'Pantau CCTV secara real-time', 'Lapor aktivitas mencurigakan'],
-        'Ruang Server': ['Check akses log', 'Verifikasi suhu ruangan', 'Backup security system'],
-        'Parkiran': ['Pantau plat nomor', 'Check tiket parkir', 'Monitor area gelap']
-      };
-      return actions[category] || ['Pantau aktivitas', 'Document kejadian', 'Lapor ke supervisor'];
-    }
-
-    function handleAnalysisResults(results) {
-      lastAnalysisResults = results;
-      elements.analysisCards.innerHTML = '';
-      
-      results.forEach((result, index) => {
-        const template = document.getElementById('analysisCardTemplate');
-        const card = template.content.cloneNode(true);
-        
-        card.querySelector('.label').textContent = `${result.label} (${result.details.riskLevel})`;
-        card.querySelector('.score').textContent = result.score;
-        
-        // Set CSS variable for progress bar
-        const analysisCard = card.querySelector('.analysis-card');
-        analysisCard.style.setProperty('--score', result.score);
-        
-        // Add enhanced click handlers
-        card.querySelector('.generateSopBtn').addEventListener('click', () => {
-          showNotification(`Membuat SOP untuk ${result.label}...`, 'success');
-          prepareSopFromResult(result);
-        });
-        
-        card.querySelector('.viewSnapBtn').addEventListener('click', () => {
-          if (lastSnapshotDataUrl) {
-            const newWindow = window.open();
-            newWindow.document.write(`
-              <html>
-                <head><title>Snapshot - ${result.label}</title></head>
-                <body style="margin:0;background:#2c3e50;display:flex;justify-content:center;align-items:center;height:100vh;">
-                  <img src="${lastSnapshotDataUrl}" style="max-width:100%;max-height:100%;border-radius:8px;box-shadow:0 8px 32px rgba(0,0,0,0.3);">
-                </body>
-              </html>
-            `);
-          } else {
-            showNotification('Tidak ada snapshot tersedia!', 'error');
-          }
-        });
-        
-        elements.analysisCards.appendChild(card);
-      });
-
-      // Show manual override if low confidence
-      if (results.length > 0 && results[0].score < CONF_THRESHOLD) {
-        elements.manualOverride.style.display = 'block';
-        elements.manualSelect.innerHTML = '';
-        CATEGORIES.forEach(category => {
-          const option = document.createElement('option');
-          option.value = category;
-          option.textContent = category;
-          elements.manualSelect.appendChild(option);
-        });
-      } else {
-        elements.manualOverride.style.display = 'none';
-      }
-
-      saveToHistory({ 
-        timestamp: new Date().toISOString(), 
-        results, 
-        snapshot: lastSnapshotDataUrl 
-      });
-      
-      showNotification('Analisis selesai! Pilih kategori untuk generate SOP.', 'success');
-    }
-
-    /* ========= ENHANCED SOP SYSTEM ========= */
-    elements.applyManualBtn.addEventListener('click', () => {
-      const selected = elements.manualSelect.value;
-      if (!selected) {
-        showNotification('Pilih kategori terlebih dahulu!', 'error');
-        return;
-      }
-      const manualResult = { 
-        label: selected, 
-        score: 1.0,
-        details: { riskLevel: 'Manual', recommendedActions: [] }
-      };
-      prepareSopFromResult(manualResult);
-    });
-
-    function prepareSopFromResult(result) {
-      elements.locationName.value = result.label;
-      elements.dateField.valueAsDate = new Date();
-      
-      const template = generateEnhancedSopTemplate(result.label);
-      elements.sopEditor.value = template.sopText;
-      renderEnhancedChecklist(template.checklist);
-      elements.exportPdfBtn.disabled = false;
-      
-      showNotification(`SOP untuk ${result.label} berhasil dibuat!`, 'success');
-    }
-
-    function generateEnhancedSopTemplate(label) {
-      const dateStr = new Date().toLocaleDateString('id-ID', { 
-        weekday: 'long', 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
-      });
-      
-      const sopText = `STANDAR OPERASIONAL PROSEDUR (SOP)
-KEAMANAN ${label.toUpperCase()}
-
-Tanggal: ${dateStr}
-Lokasi: ${label}
-Versi: ${elements.versionSelect.value}
-
-I. TUJUAN
-Menjamin keamanan dan keselamatan area ${label}, mencegah akses tidak sah, serta memastikan compliance dengan regulasi keamanan.
-
-II. RUANG LINGKUP
-Prosedur ini berlaku untuk semua petugas keamanan yang bertugas di area ${label} selama semua shift operasional.
-
-III. PROSEDUR OPERASIONAL
-
-A. PERSIAPAN SHIFT (15 menit sebelum tugas)
-  1. Periksa kelengkapan alat: radio komunikasi, senter, body cam (jika ada)
-  2. Pastikan sistem CCTV berfungsi optimal
-  3. Review laporan shift sebelumnya
-  4. Koordinasi dengan petugas shift sebelumnya
-
-B. MONITORING RUTIN
-  1. Lakukan patroli visual setiap 30 menit
-  2. Pantau CCTV secara aktif
-  3. Dokumentasikan aktivitas mencurigakan
-  4. Verifikasi identitas pengunjung/personel
-
-C. TANGGAP DARURAT
-  1. Identifikasi ancaman/penyusupan
-  2. Aktifkan alarm (jika diperlukan)
-  3. Hubungi supervisor & tim respon
-  4. Evakuasi sesuai protokol
-
-IV. CHECKLIST HARIAN
-  [ ] Pemeriksaan peralatan keamanan
-  [ ] Test sistem komunikasi
-  [ ] Review access log
-  [ ] Update laporan keamanan
-
-V. DOKUMENTASI
-Semua aktivitas harus didokumentasikan dalam log book digital dengan timestamp.
-
-Dibuat otomatis oleh AI Security SOP Generator - DeepSeek Pro Edition`;
-
-      const checklist = [
-        { label: 'Pemeriksaan peralatan keamanan lengkap', done: false },
-        { label: 'Sistem CCTV berfungsi optimal', done: false },
-        { label: 'Komunikasi radio aktif', done: false },
-        { label: 'Access log terkini', done: false },
-        { label: 'Penerangan area memadai', done: false },
-        { label: 'Emergency exit clear', done: false }
-      ];
-      
-      return { sopText, checklist };
-    }
-
-    function renderEnhancedChecklist(items) {
-      elements.checklistDiv.innerHTML = '';
-      items.forEach((item, index) => {
-        const wrapper = document.createElement('div');
-        wrapper.style.cssText = 'padding: 10px; margin: 5px 0; background: rgba(0,0,0,0.03); border-radius: 8px;';
-        wrapper.innerHTML = `
-          <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-            <input type="checkbox" id="chk_${index}" style="transform: scale(1.2);">
-            <span>${item.label}</span>
-          </label>
-        `;
-        elements.checklistDiv.appendChild(wrapper);
-      });
-    }
-
-    /* ========= ENHANCED EXPORT SYSTEM ========= */
-    elements.generateBtn.addEventListener('click', () => {
-      if (!elements.locationName.value.trim()) {
-        showNotification('Isi nama lokasi terlebih dahulu!', 'error');
-        elements.locationName.focus();
-        return;
-      }
-
-      const template = generateEnhancedSopTemplate(elements.locationName.value);
-      elements.sopEditor.value = template.sopText;
-      renderEnhancedChecklist(template.checklist);
-      elements.exportPdfBtn.disabled = false;
-      
-      showNotification('SOP berhasil digenerate! Siap untuk export PDF.', 'success');
-    });
-
-    elements.exportPdfBtn.addEventListener('click', () => {
-      const meta = {
-        location: elements.locationName.value || 'Unknown Location',
-        date: elements.dateField.value || new Date().toISOString().split('T')[0],
-        version: elements.versionSelect.value || 'v1.0'
-      };
-
-      const printEl = document.createElement('div');
-      printEl.style.cssText = 'padding: 25px; font-family: Arial, sans-serif; color: #2c3e50; max-width: 800px; margin: 0 auto;';
-      
-      printEl.innerHTML = `
-        <div style="text-align: center; border-bottom: 3px solid #0b3b66; padding-bottom: 20px; margin-bottom: 25px;">
-          <h1 style="color: #0b3b66; margin: 0;">STANDAR OPERASIONAL PROSEDUR</h1>
-          <h2 style="color: #0b6b44; margin: 10px 0;">${meta.location}</h2>
-          <p style="color: #7f8c8d;"><strong>Tanggal:</strong> ${meta.date} | <strong>Versi:</strong> ${meta.version}</p>
-        </div>
-      `;
-
-      if (lastSnapshotDataUrl) {
-        printEl.innerHTML += `
-          <div style="text-align: center; margin: 20px 0;">
-            <img src="${lastSnapshotDataUrl}" style="max-width: 300px; border: 2px solid #ddd; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
-            <p style="font-size: 12px; color: #7f8c8d; margin-top: 5px;">Snapshot Referensi</p>
-          </div>
-        `;
-      }
-
-      const sopHtml = elements.sopEditor.value.replace(/\n/g, '<br>');
-      printEl.innerHTML += `
-        <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; border-left: 4px solid #0b6b44;">
-          <h3 style="color: #0b3b66; margin-top: 0;">PROSEDUR OPERASIONAL</h3>
-          <div style="line-height: 1.6;">${sopHtml}</div>
-        </div>
-      `;
-
-      const checklistItems = Array.from(elements.checklistDiv.querySelectorAll('input[type="checkbox"]'))
-        .map((checkbox, index) => {
-          const label = checkbox.parentElement.querySelector('span').textContent;
-          const status = checkbox.checked ? '✅' : '❌';
-          return `<li style="margin: 8px 0; padding: 5px 0; border-bottom: 1px solid #eee;">${status} ${label}</li>`;
-        }).join('');
-
-      printEl.innerHTML += `
-        <div style="margin-top: 25px;">
-          <h3 style="color: #0b3b66;">CHECKLIST VERIFIKASI</h3>
-          <ul style="list-style: none; padding: 0;">${checklistItems}</ul>
-        </div>
-        
-        <div style="margin-top: 30px; padding-top: 20px; border-top: 2px dashed #bdc3c7; text-align: center; color: #7f8c8d; font-size: 12px;">
-          <p>Dibuat otomatis oleh <strong>AI Security SOP Generator - DeepSeek Pro Edition</strong></p>
-          <p>Generated pada: ${new Date().toLocaleString('id-ID')}</p>
-        </div>
-      `;
-
-      const options = {
-        margin: 1,
-        filename: `SOP_${meta.location.replace(/\s+/g, '_')}_${meta.date}_${meta.version}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { 
-          scale: 2,
-          useCORS: true,
-          logging: false
-        },
-        jsPDF: { 
-          unit: 'mm', 
-          format: 'a4', 
-          orientation: 'portrait' 
-        }
-      };
-
-      html2pdf().set(options).from(printEl).save();
-      showNotification('PDF berhasil diexport!', 'success');
-    });
-
-    /* ========= ENHANCED UTILITIES ========= */
-    elements.saveJsonBtn.addEventListener('click', () => {
-      const payload = buildCurrentSopPayload();
-      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `SOP_${payload.metadata.location || 'location'}_${new Date().toISOString().slice(0,10)}.json`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      showNotification('Data SOP berhasil disimpan sebagai JSON!', 'success');
-    });
-
-    elements.copyClipboardBtn.addEventListener('click', async () => {
-      try {
-        await navigator.clipboard.writeText(elements.sopEditor.value);
-        showNotification('SOP berhasil disalin ke clipboard!', 'success');
-      } catch (error) {
-        showNotification('Gagal menyalin ke clipboard: ' + error.message, 'error');
-      }
-    });
-
-    function buildCurrentSopPayload() {
-      const checklistItems = Array.from(elements.checklistDiv.querySelectorAll('input[type="checkbox"]'))
-        .map(checkbox => ({
-          label: checkbox.parentElement.querySelector('span').textContent,
-          done: checkbox.checked
-        }));
-
-      return {
-        metadata: {
-          location: elements.locationName.value,
-          date: elements.dateField.value,
-          version: elements.versionSelect.value,
-          generatedAt: new Date().toISOString()
-        },
-        sop: elements.sopEditor.value,
-        checklist: checklistItems,
-        snapshot: lastSnapshotDataUrl,
-        analysis: lastAnalysisResults,
-        system: 'DeepSeek Pro Edition v1.0'
-      };
-    }
-
-    /* ========= ENHANCED HISTORY SYSTEM ========= */
-    function saveToHistory(item) {
-      const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
-      history.unshift({
-        ...item,
-        id: Date.now(),
-        location: elements.locationName.value || 'Unknown'
-      });
-      
-      // Keep only last 50 items
-      if (history.length > 50) history.length = 50;
-      
-      localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
-      renderEnhancedHistory();
-    }
-
-    function renderEnhancedHistory() {
-      const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
-      elements.historyList.innerHTML = '';
-      
-      if (history.length === 0) {
-        elements.historyList.innerHTML = `
-          <div style="text-align: center; padding: 40px 20px; color: #7f8c8d;">
-            <div style="font-size: 48px; margin-bottom: 10px;">📊</div>
-            <p>Belum ada history analisis</p>
-          </div>
-        `;
-        return;
-      }
-      
-      history.forEach(item => {
-        const div = document.createElement('div');
-        div.className = 'history-item';
-        div.innerHTML = `
-          <div style="flex: 1;">
-            <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 5px;">
-              <strong>${item.location}</strong>
-              <small style="color: #7f8c8d; margin-left: 10px;">${new Date(item.timestamp).toLocaleTimeString()}</small>
-            </div>
-            <div style="font-size: 13px; color: #333;">
-              ${item.results.slice(0, 2).map(r => 
-                `<span style="display: inline-block; background: ${r.score > 0.7 ? '#27ae60' : r.score > 0.5 ? '#f39c12' : '#e74c3c'}; color: white; padding: 2px 8px; border-radius: 12px; margin: 2px; font-size: 11px;">${r.label} (${r.score})</span>`
-              ).join('')}
-            </div>
-          </div>
-        `;
-        
-        const viewBtn = document.createElement('button');
-        viewBtn.innerHTML = '👁️ View';
-        viewBtn.style.background = 'linear-gradient(135deg, #3498db, #2980b9)';
-        viewBtn.addEventListener('click', () => {
-          if (item.snapshot) {
-            const newWindow = window.open('', '_blank');
-            newWindow.document.write(`
-              <html>
-                <head><title>History Detail - ${item.location}</title></head>
-                <body style="font-family: Arial; padding: 20px; background: #f4f7fb;">
-                  <h2>Analysis History - ${item.location}</h2>
-                  <img src="${item.snapshot}" style="max-width: 100%; border-radius: 8px; margin: 20px 0;">
-                  <pre style="background: white; padding: 20px; border-radius: 8px; overflow: auto;">${JSON.stringify(item, null, 2)}</pre>
-                </body>
-              </html>
-            `);
-          } else {
-            showNotification('Tidak ada snapshot dalam history ini', 'error');
-          }
-        });
-        
-        div.appendChild(viewBtn);
-        elements.historyList.appendChild(div);
-      });
-    }
-
-    elements.clearHistoryBtn.addEventListener('click', () => {
-      if (confirm('Apakah Anda yakin ingin menghapus semua history analisis?')) {
-        localStorage.removeItem(HISTORY_KEY);
-        renderEnhancedHistory();
-        showNotification('History berhasil dihapus!', 'success');
-      }
-    });
-
-    elements.exportHistoryBtn.addEventListener('click', () => {
-      const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
-      const blob = new Blob([JSON.stringify(history, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `security_analysis_history_${new Date().toISOString().slice(0,10)}.json`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      showNotification('History berhasil diexport!', 'success');
-    });
-
-    /* ========= ENHANCED MODAL SYSTEM ========= */
-    elements.privacyBtn.addEventListener('click', () => {
-      elements.privacyModal.classList.remove('hidden');
-    });
-
-    elements.privacyClose.addEventListener('click', () => {
-      elements.privacyModal.classList.add('hidden');
-    });
-
-    elements.confirmRemote.addEventListener('change', () => {
-      if (!elements.confirmRemote.checked) {
-        elements.remoteToggle.checked = false;
-      }
-    });
-
-    /* ========= INITIALIZATION ========= */
-    function initializeApp() {
-      // Set current date
-      elements.dateField.valueAsDate = new Date();
-      
-      // Load history
-      renderEnhancedHistory();
-      
-      // Initialize modal state
-      elements.privacyModal.classList.add('hidden');
-      
-      // Add keyboard shortcuts
-      document.addEventListener('keydown', (e) => {
-        if (e.ctrlKey && e.key === 's') {
-          e.preventDefault();
-          elements.saveJsonBtn.click();
-        }
-        if (e.ctrlKey && e.key === 'p') {
-          e.preventDefault();
-          elements.exportPdfBtn.click();
-        }
-      });
-      
-      showNotification('AI Security SOP Generator siap digunakan!', 'success');
-      
-      console.log('🚀 DeepSeek Pro Edition initialized successfully!');
-    }
-
-    // Enhanced overlay debug
-    elements.overlayDebug.addEventListener('click', () => {
-      if (elements.privacyModal.classList.contains('hidden')) {
-        elements.privacyModal.classList.remove('hidden');
-        elements.overlayDebug.textContent = '🔴 Hide Overlay';
-      } else {
-        elements.privacyModal.classList.add('hidden');
-        elements.overlayDebug.textContent = '🟢 Toggle Overlay';
-      }
-    });
-
-    // Initialize when DOM is loaded
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', initializeApp);
+  // read EXIF
+  EXIF.getData(first, async function(){
+    const lat = EXIF.getTag(this,'GPSLatitude');
+    const lon = EXIF.getTag(this,'GPSLongitude');
+    const latRef = EXIF.getTag(this,'GPSLatitudeRef');
+    const lonRef = EXIF.getTag(this,'GPSLongitudeRef');
+    const dt = EXIF.getTag(this,'DateTimeOriginal') || EXIF.getTag(this,'DateTime');
+    if(lat && lon){
+      const la = parseFloat(dmsToDec(lat, latRef));
+      const lo = parseFloat(dmsToDec(lon, lonRef));
+      document.getElementById('lat').value = la;
+      document.getElementById('lon').value = lo;
+      const place = await reverseGeo(la, lo);
+      document.getElementById('place').value = place || '';
     } else {
-      initializeApp();
+      // ask device geolocation fallback
+      if(navigator.geolocation){
+        navigator.geolocation.getCurrentPosition(async pos=>{
+          const la = pos.coords.latitude, lo = pos.coords.longitude;
+          document.getElementById('lat').value = la; document.getElementById('lon').value = lo;
+          const place = await reverseGeo(la, lo);
+          document.getElementById('place').value = place || '';
+        }, ()=>{});
+      }
     }
+    if(dt) document.getElementById('timestamp').value = dt.replace(/:/g,'-');
 
-    // Global helper function
-    window.safeKillOverlay = function() {
-      elements.privacyModal.classList.add('hidden');
-    };
+    // analyze image: detect objects on preview element
+    const objects = await detectObjectsOnImage(document.getElementById('preview'));
+    document.getElementById('objInfo').value = objects.map(o=>`${o.label} (${Math.round(o.score*100)}%)`).join(', ');
+    document.getElementById('lightInfo').value = analyzeBrightness(document.getElementById('preview'));
+    const risk = computeRisk({areaType: document.getElementById('areaType').value, light: document.getElementById('lightInfo').value, objList: objects, crimeText: document.getElementById('crimeInfo').value || ''});
+    document.getElementById('riskInfo').value = `${risk.score} — ${risk.reasons.join('; ')}`;
+  });
+});
 
-  })();
-  </script>
+// add to patrol button
+document.getElementById('addPatrolBtn').addEventListener('click', function(){
+  const lat = parseFloat(document.getElementById('lat').value || NaN);
+  const lon = parseFloat(document.getElementById('lon').value || NaN);
+  if(Number.isNaN(lat) || Number.isNaN(lon)){ alert('Isi lokasi terlebih dahulu (EXIF atau geolocation)'); return; }
+  const p = {
+    id: uid('pt'),
+    lat, lon,
+    ts: document.getElementById('timestamp').value || new Date().toISOString(),
+    place: document.getElementById('place').value,
+    areaType: document.getElementById('areaType').value,
+    light: document.getElementById('lightInfo').value,
+    obj: document.getElementById('objInfo').value,
+    crime: document.getElementById('crimeInfo').value,
+    imgDataUrl: selectedImageDataUrl
+  };
+  // compute risk again with parsed objects
+  const objects = (document.getElementById('objInfo').value||'').split(',').map(s=>({label:s.split('(')[0].trim(), score:0.8}));
+  p.risk = computeRisk({areaType:p.areaType, light:p.light, objList:objects, crimeText:p.crime});
+  patrolPoints.push(p);
+  renderPatrolList();
+  // add marker
+  L.marker([p.lat,p.lon]).addTo(routeLayer).bindPopup(`${p.place || p.areaType}<br>Risk:${p.risk.score}`).openPopup();
+});
+
+// analyze batch button: re-run detection for all images if needed (here mock)
+document.getElementById('analyzeAllBtn').addEventListener('click', async function(){
+  for(const p of patrolPoints){
+    // re-evaluate risk cheaply
+    const objects = (p.obj||'').split(',').map(s=>({label:s.split('(')[0].trim(), score:0.8}));
+    p.risk = computeRisk({areaType:p.areaType, light:p.light, objList:objects, crimeText:p.crime});
+  }
+  renderPatrolList();
+  alert('Batch analysis done.');
+});
+
+// route generation
+document.getElementById('routeBtn').addEventListener('click', function(){
+  if(patrolPoints.length===0) return alert('Tidak ada titik di patrol list.');
+  const order = computeRouteOrder();
+  drawRouteOnMap(order);
+});
+
+// export JSON
+document.getElementById('exportBtn').addEventListener('click', function(){
+  const blob = new Blob([JSON.stringify(patrolPoints,null,2)],{type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download='patrol_points.json'; a.click();
+  URL.revokeObjectURL(url);
+});
+
+// copy prompt: combine all points into single professional prompt
+document.getElementById('copyPromptBtn').addEventListener('click', function(){ copyPromptToClipboard(); });
+
+function copyPromptToClipboard(){
+  const prompt = buildBatchPrompt();
+  navigator.clipboard.writeText(prompt).then(()=> alert('Prompt disalin ke clipboard.'));
+}
+
+// speak prompt
+document.getElementById('speakBtn').addEventListener('click', function(){
+  const prompt = buildBatchPrompt();
+  if(!('speechSynthesis' in window)) return alert('Browser tidak mendukung TTS');
+  const ut = new SpeechSynthesisUtterance(prompt);
+  ut.lang = 'id-ID';
+  window.speechSynthesis.speak(ut);
+});
+
+// build batch prompt
+function buildBatchPrompt(){
+  let out = `Anda adalah Security Supervisor profesional.\n\nSaya memberikan daftar titik patroli berikut (foto + metadata). Buat SOP, Protap, dan prioritas tindakan untuk setiap lokasi serta ringkasan rekomendasi umum.\n\n`;
+  patrolPoints.forEach((p,i)=>{
+    out += `--- Lokasi ${i+1} ---\nNama: ${p.place || p.areaType}\nKoordinat: ${p.lat}, ${p.lon}\nWaktu: ${p.ts}\nTipe Area: ${p.areaType}\nCahaya: ${p.light}\nDeteksi Objek: ${p.obj}\nRiwayat Kriminal: ${p.crime}\nAnalisa Risiko: ${p.risk.score} — ${p.risk.reasons.join('; ')}\n\n`;
+  });
+  out += `\nBerikan: 1) SOP singkat per lokasi (prioritas tindakan 1-5), 2) Rekomendasi preventif umum, 3) Indikator kapan harus eskalasi ke pihak berwenang.\n\nTulis secara jelas, rapi, dan actionable.`;
+  document.getElementById('promptOutput').value = out;
+  return out;
+}
+
+// copy single point prompt - helper
+function copyPointPrompt(id){
+  const p = patrolPoints.find(x=>x.id===id);
+  if(!p) return;
+  const prompt = `Anda adalah Security Professional. Berikut data lokasi:\nNama: ${p.place}\nKoordinat: ${p.lat},${p.lon}\nTipe: ${p.areaType}\nDeteksi: ${p.obj}\nRiwayat: ${p.crime}\nAnalisa Risiko: ${p.risk.score} — ${p.risk.reasons.join('; ')}\n\nBuat SOP & Protap singkat.`;
+  navigator.clipboard.writeText(prompt).then(()=> alert('Prompt lokasi disalin.'));
+}
+
+// ============ Service worker registration for PWA offline ============
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js').then(reg=>{
+    console.log('sw registered', reg.scope);
+  }).catch(err=>console.warn('sw failed', err));
+}
+
+</script>
 </body>
 </html>
