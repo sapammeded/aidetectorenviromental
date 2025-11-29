@@ -1219,5 +1219,178 @@ setTimeout(() => {
   setupCategoryFiltering();
 }, 100);
 </script>
+  <!-- BEGIN: User-help + tooltips + first-run walkthrough -->
+<style>
+  /* tooltip */
+  .ng-tooltip { position: absolute; background: rgba(0,0,0,0.75); color:#fff; padding:6px 8px; border-radius:8px; font-size:13px; pointer-events:none; z-index:4000; opacity:0; transform:translateY(6px); transition:opacity .12s, transform .12s; white-space:nowrap; }
+  .btn-hint { position:relative; }
+  /* help modal */
+  #ngHelpModal { position:fixed; inset:0; background:rgba(0,0,0,0.6); display:none; align-items:center; justify-content:center; z-index:5000; }
+  #ngHelpCard { background:#0b1220; color:#fff; padding:16px; width:90%; max-width:640px; border-radius:12px; box-shadow:0 8px 30px rgba(0,0,0,0.6); }
+  #ngHelpCard h2{ margin:0 0 8px 0; font-size:18px; }
+  #ngHelpCard p.small{ color: #b7c1d6; margin:6px 0; font-size:13px; }
+  #ngHelpClose{ background:#1e40af; border:0; color:#fff; padding:8px 12px; border-radius:8px; cursor:pointer; margin-top:8px; }
+  /* walkthrough highlight */
+  .ng-overlay-highlight { position: absolute; border: 2px solid #ffcc00; box-shadow: 0 12px 40px rgba(255,204,0,0.12); border-radius:10px; z-index:4500; pointer-events:none; transition:all .18s; }
+  .ng-walk-tip { position: absolute; z-index:4501; background:rgba(11,17,32,0.92); color:#fff; padding:8px 10px; border-radius:8px; max-width:280px; font-size:13px; }
+  /* small help button */
+  #ngHelpBtn { position: fixed; left: 12px; top: 12px; z-index:6000; background: rgba(0,0,0,0.5); color:#fff; border:0; padding:8px 10px; border-radius:8px; cursor:pointer; font-weight:700; }
+  @media (hover:none) { /* on touch devices, slightly larger tap area */ #ngHelpBtn{ padding:10px 12px; } }
+</style>
+
+<!-- Help button -->
+<button id="ngHelpBtn" aria-label="Bantuan singkat">Bantuan</button>
+
+<!-- tooltip element (re-used) -->
+<div id="ngTooltip" class="ng-tooltip" aria-hidden="true"></div>
+
+<!-- Help modal -->
+<div id="ngHelpModal" role="dialog" aria-modal="true">
+  <div id="ngHelpCard">
+    <h2>Panduan singkat Naviguard</h2>
+    <p class="small"><strong>Mode cepat:</strong> tombol "×" kanan bawah tutup/ buka panel. Gunakan mode minimal untuk pandangan kamera lebih luas.</p>
+
+    <p class="small"><strong>Kontrol utama</strong></p>
+    <p class="small"><strong>🎯 (Record)</strong> — Mulai/berhenti merekam jalur perjalanan. Cocok untuk patroli atau catat rute.</p>
+    <p class="small"><strong>🚀 (Start Nav)</strong> — Mulai navigasi ke waypoint terpilih (klik waypoint dari daftar untuk target).</p>
+    <p class="small"><strong>🔄 (Switch)</strong> — Ganti kamera depan/belakang.</p>
+    <p class="small"><strong>Simpan Lokasi</strong> — Simpan posisi sekarang sebagai waypoint (tersimpan lokal).</p>
+    <p class="small"><strong>Export GPX</strong> — Ekspor rekaman jalur ke file GPX untuk GIS atau aplikasi peta lain.</p>
+    <p class="small"><strong>OCR / Detect</strong> — Fitur berat (matikan jika hp lambat). OCR baca teks pada frame, Detect mengenali objek umum.</p>
+    <p class="small"><strong>Map</strong> — Peta mini muncul; upload MBTiles hanya di menu peta (lanjutan).</p>
+
+    <p class="small">Semua data disimpan di perangkat kecuali Anda memilih sinkronisasi. Tekan tombol di bawah ini untuk tutup panduan ini.</p>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button id="ngHelpClose">Tutup</button>
+    </div>
+  </div>
+</div>
+
+<!-- Walkthrough elements -->
+<div id="ngWalkOverlay" style="display:none; position:fixed; inset:0; z-index:4600; pointer-events:none;">
+  <div id="ngHighlight" class="ng-overlay-highlight" style="width:0;height:0;left:0;top:0;"></div>
+  <div id="ngWalkTip" class="ng-walk-tip" style="left:0;top:0;display:none;"></div>
+</div>
+
+<script>
+(function(){
+  // helper
+  const $ = id => document.getElementById(id);
+  const tooltip = $('ngTooltip');
+  const helpBtn = $('ngHelpBtn');
+  const helpModal = $('ngHelpModal');
+  const helpClose = $('ngHelpClose');
+
+  // map of selectors -> short friendly label used by tooltip & walkthrough
+  const controls = [
+    { sel:'#btnTogglePath', title:'Record: tekan untuk mulai atau berhenti merekam jalur' },
+    { sel:'#btnStartNav', title:'Start Nav: mulai navigasi ke waypoint terpilih' },
+    { sel:'#btnSwitchCam', title:'Ganti kamera depan/belakang' },
+    { sel:'#btnSetWaypoint', title:'Simpan Lokasi: simpan koordinat sekarang sebagai waypoint' },
+    { sel:'#btnExportGPX', title:'Export GPX: unduh rekaman jalur sebagai file .gpx' },
+    { sel:'#btnToggleVoice', title:'Voice: baca nama tempat (TTS)' },
+    { sel:'#btnLowPower', title:'Low Power: hemat baterai (update GPS lebih jarang)' },
+    { sel:'#toggleOCR', title:'OCR: baca tulisan dari kamera (ketuk layar untuk scan)' },
+    { sel:'#toggleOD', title:'Detect: jalankan model deteksi objek (heavy)' },
+    { sel:'#toggleMap', title:'Map: tampilkan mini-map & upload tiles' },
+    { sel:'#uiToggleBtn', title:'Toggle UI: tutup / buka panel kontrol' }
+  ];
+
+  // attach basic tooltips: on hover (desktop) or long-press (mobile)
+  controls.forEach(c=>{
+    try{
+      const el = document.querySelector(c.sel);
+      if(!el) return;
+      // add title attribute for accessibility
+      if(!el.getAttribute('title')) el.setAttribute('title', c.title);
+      // add hint class for positioning
+      el.classList.add('btn-hint');
+
+      // show tooltip on mouseenter / focus
+      el.addEventListener('mouseenter', (ev)=> showTip(c.title, ev.target));
+      el.addEventListener('focus', (ev)=> showTip(c.title, ev.target));
+      el.addEventListener('mouseleave', hideTip);
+      el.addEventListener('blur', hideTip);
+
+      // for touch devices: show tooltip on touchstart for short time
+      el.addEventListener('touchstart', function(ev){
+        showTip(c.title, ev.target);
+        setTimeout(hideTip, 2200);
+      }, {passive:true});
+    }catch(e){}
+  });
+
+  function showTip(text, target){
+    if(!target) return;
+    tooltip.textContent = text;
+    tooltip.style.opacity = '0';
+    tooltip.style.display = 'block';
+    const rect = target.getBoundingClientRect();
+    // place above if space, else below
+    const top = rect.top - 10;
+    let left = rect.left + (rect.width/2) - 8;
+    // ensure inside viewport
+    left = Math.max(8, Math.min(left, window.innerWidth - tooltip.offsetWidth - 8));
+    tooltip.style.left = (left) + 'px';
+    tooltip.style.top = (Math.max(8, rect.top - 40)) + 'px';
+    requestAnimationFrame(()=> { tooltip.style.opacity = '1'; tooltip.style.transform='translateY(0)'; });
+  }
+  function hideTip(){ tooltip.style.opacity='0'; setTimeout(()=>tooltip.style.display='none',120); }
+
+  // help modal open/close
+  helpBtn.addEventListener('click', ()=>{ helpModal.style.display='flex'; });
+  helpClose.addEventListener('click', ()=>{ helpModal.style.display='none'; });
+
+  // First-run walkthrough (only once)
+  const walked = localStorage.getItem('ng_walk_v1');
+  if(!walked){
+    runWalkthrough();
+    localStorage.setItem('ng_walk_v1','1');
+  }
+  function runWalkthrough(){
+    const overlay = $('ngWalkOverlay');
+    const highlight = $('ngHighlight');
+    const tip = $('ngWalkTip');
+    overlay.style.display='block';
+    // sequence of controls to show (subset)
+    const seq = ['#uiToggleBtn','#btnSetWaypoint','#btnTogglePath','#btnStartNav','#btnSwitchCam','#btnExportGPX'];
+    let i=0;
+    function showNext(){
+      if(i>=seq.length){ overlay.style.display='none'; tip.style.display='none'; highlight.style.width='0px'; highlight.style.height='0px'; return; }
+      const el = document.querySelector(seq[i]);
+      if(!el){ i++; return showNext(); }
+      const r = el.getBoundingClientRect();
+      // position highlight slightly bigger than element
+      highlight.style.left = (r.left - 8) + 'px';
+      highlight.style.top = (r.top - 8) + 'px';
+      highlight.style.width = (r.width + 16) + 'px';
+      highlight.style.height = (r.height + 16) + 'px';
+      // tip position
+      tip.style.display='block';
+      // place tip near element (below if near top)
+      const tipX = Math.max(12, Math.min(r.left, window.innerWidth - 300));
+      const tipY = (r.top + r.height + 12) < (window.innerHeight - 120) ? (r.top + r.height + 12) : (r.top - 96);
+      tip.style.left = tipX + 'px';
+      tip.style.top = tipY + 'px';
+      // tip text (very short)
+      const labels = {
+        '#uiToggleBtn': 'Tutup / buka panel (untuk pandangan kamera lebar).',
+        '#btnSetWaypoint': 'Simpan posisi saat ini sebagai waypoint.',
+        '#btnTogglePath': 'Rekam jalur perjalanan (patroli, rute).',
+        '#btnStartNav': 'Navigasi ke waypoint terpilih.',
+        '#btnSwitchCam': 'Ganti kamera depan / belakang.',
+        '#btnExportGPX': 'Unduh jalur sebagai file GPX.'
+      };
+      tip.textContent = labels[seq[i]] || 'Kontrol';
+      i++;
+      // after 2.0s show next
+      setTimeout(showNext, 1800);
+    }
+    showNext();
+  }
+
+})();
+</script>
+<!-- END: User-help + tooltips + walkthrough -->
 </body>
 </html>
