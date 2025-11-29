@@ -1,0 +1,21 @@
+Context:
+Metadata: {metadata_json}
+
+OCR text: {ocr_text}
+
+Detected objects: {detected_objects}
+
+Selected experts: {selected_experts}
+
+Instruksi:
+Buat laporan inspeksi berdasarkan foto dan konteks di atas. Gunakan struktur berikut (semua point wajib diisi):
+1) INDIKASI / TEMUAN - deskripsi fakta visual (apa yang terlihat)
+2) SEBAB POTENSIAL - analisa kemungkinan penyebab berdasarkan bukti
+3) AKIBAT / RISIKO - kemungkinan konsekuensi jika tidak ditangani
+4) REKOMENDASI SEGERA - tindakan prioritas yang harus dilakukan kurang dari 24 jam
+5) PENCEGAHAN JANGKA PANJANG - tindakan sistemik dan regulasi/standar yang direkomendasikan
+6) CATATAN AHLI - ringkasan singkat tambahan untuk setiap ahli yang dipilih
+
+Jika metadata mencakup 'legal_refs', tambahkan bagian "Referensi Hukum & Standar" yang mencantumkan tiap sumber.
+Batasi 300-450 kata. Gunakan bahasa Indonesia formal teknis.
+Akhiri dengan: "(Auto-generated oleh Expert Module — verifikasi lapangan diperlukan.)"
