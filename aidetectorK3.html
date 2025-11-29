@@ -1,0 +1,1223 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Expert Prompt Generator — Master Level Analysis</title>
+<style>
+  :root {
+    --primary: #0A1931;
+    --secondary: #1E3A5F;
+    --accent: #D4AF37;
+    --accent-dark: #B8941F;
+    --light: #F8F9FA;
+    --card: #FFFFFF;
+    --muted: #6C757D;
+    --success: #28A745;
+    --radius: 12px;
+    --shadow: 0 8px 30px rgba(0,0,0,0.08);
+    --shadow-hover: 0 12px 40px rgba(0,0,0,0.12);
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--light);
+    color: var(--primary);
+    line-height: 1.6;
+    padding: 20px;
+    background-image: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
+  }
+
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  /* Header Styles */
+  .header {
+    background: var(--primary);
+    color: white;
+    padding: 2rem;
+    border-radius: var(--radius);
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 200px;
+    height: 200px;
+    background: linear-gradient(45deg, transparent 30%, rgba(212, 175, 55, 0.1) 100%);
+    border-radius: 0 0 0 100px;
+  }
+
+  .header h1 {
+    font-size: 2.2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    letter-spacing: -0.5px;
+  }
+
+  .header .subtitle {
+    font-size: 1.1rem;
+    opacity: 0.9;
+    font-weight: 400;
+  }
+
+  /* Main Grid */
+  .main-grid {
+    display: grid;
+    grid-template-columns: 1fr 400px;
+    gap: 2rem;
+    margin-bottom: 2rem;
+  }
+
+  @media (max-width: 1024px) {
+    .main-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* Card Components */
+  .card {
+    background: var(--card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    border: 1px solid rgba(255,255,255,0.9);
+    transition: all 0.3s ease;
+    overflow: hidden;
+  }
+
+  .card:hover {
+    box-shadow: var(--shadow-hover);
+    transform: translateY(-2px);
+  }
+
+  .card-header {
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    color: white;
+    padding: 1.25rem 1.5rem;
+    font-weight: 600;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .card-header .icon {
+    font-size: 1.2rem;
+  }
+
+  .card-body {
+    padding: 1.5rem;
+  }
+
+  /* Form Elements */
+  .form-group {
+    margin-bottom: 1.5rem;
+  }
+
+  .form-label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--primary);
+    font-size: 0.95rem;
+  }
+
+  .form-control {
+    width: 100%;
+    padding: 0.875rem 1rem;
+    border: 2px solid #E9ECEF;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    background: var(--light);
+  }
+
+  .form-control:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
+  }
+
+  textarea.form-control {
+    min-height: 120px;
+    resize: vertical;
+    line-height: 1.5;
+  }
+
+  .row {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .col {
+    flex: 1;
+  }
+
+  /* Button Styles */
+  .btn {
+    padding: 0.875rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: var(--primary);
+  }
+
+  .btn-primary:hover {
+    background: var(--accent-dark);
+    transform: translateY(-1px);
+  }
+
+  .btn-secondary {
+    background: var(--secondary);
+    color: white;
+  }
+
+  .btn-secondary:hover {
+    background: #2A4A7A;
+  }
+
+  .btn-outline {
+    background: transparent;
+    border: 2px solid var(--secondary);
+    color: var(--secondary);
+  }
+
+  .btn-outline:hover {
+    background: var(--secondary);
+    color: white;
+  }
+
+  .btn-sm {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+  }
+
+  /* Expert Grid - MASTER LEVEL */
+  .expert-categories {
+    margin-bottom: 1.5rem;
+  }
+
+  .category-tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+  }
+
+  .category-tab {
+    padding: 0.75rem 1.5rem;
+    background: var(--light);
+    border: 2px solid #E9ECEF;
+    border-radius: 50px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: var(--muted);
+  }
+
+  .category-tab.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--primary);
+  }
+
+  .category-tab:hover:not(.active) {
+    border-color: var(--accent);
+    color: var(--primary);
+  }
+
+  .expert-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .expert-card {
+    background: var(--card);
+    border: 2px solid #E9ECEF;
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+  }
+
+  .expert-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+  }
+
+  .expert-card.selected {
+    border-color: var(--accent);
+    background: linear-gradient(135deg, #FFF9E6, #FFF);
+    box-shadow: 0 8px 25px rgba(212, 175, 55, 0.15);
+  }
+
+  .expert-card.selected::before {
+    content: '✓';
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    background: var(--accent);
+    color: var(--primary);
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 0.8rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }
+
+  .expert-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .expert-avatar {
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+  }
+
+  .expert-info {
+    flex: 1;
+  }
+
+  .expert-name {
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--primary);
+    margin-bottom: 0.25rem;
+  }
+
+  .expert-title {
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-bottom: 0.5rem;
+    line-height: 1.4;
+  }
+
+  .expert-badge {
+    display: inline-block;
+    background: var(--accent);
+    color: var(--primary);
+    padding: 0.25rem 0.75rem;
+    border-radius: 50px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+
+  .expert-description {
+    font-size: 0.875rem;
+    color: var(--muted);
+    line-height: 1.5;
+    margin-bottom: 0.5rem;
+  }
+
+  .expert-meta {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+
+  .meta-item {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  /* Selected Experts Summary */
+  .selected-summary {
+    background: var(--light);
+    border: 2px dashed #DEE2E6;
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    margin-top: 1rem;
+  }
+
+  .summary-header {
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .selected-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .selected-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    background: white;
+    border-radius: 8px;
+    border-left: 4px solid var(--accent);
+  }
+
+  .selected-name {
+    font-weight: 500;
+    font-size: 0.9rem;
+  }
+
+  .remove-btn {
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: 4px;
+  }
+
+  .remove-btn:hover {
+    background: #FFE6E6;
+    color: #DC3545;
+  }
+
+  /* Output Section */
+  .output-section {
+    margin-top: 2rem;
+  }
+
+  .output-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+    flex-wrap: wrap;
+  }
+
+  /* Utility Classes */
+  .text-muted {
+    color: var(--muted);
+    font-size: 0.875rem;
+  }
+
+  .text-center {
+    text-align: center;
+  }
+
+  .mb-2 {
+    margin-bottom: 1rem;
+  }
+
+  .mb-3 {
+    margin-bottom: 1.5rem;
+  }
+
+  .mt-2 {
+    margin-top: 1rem;
+  }
+
+  .d-none {
+    display: none;
+  }
+
+  /* Loading Animation */
+  .loading {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(255,255,255,.3);
+    border-radius: 50%;
+    border-top-color: #fff;
+    animation: spin 1s ease-in-out infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .header {
+      padding: 1.5rem;
+    }
+    
+    .header h1 {
+      font-size: 1.8rem;
+    }
+    
+    .expert-grid {
+      grid-template-columns: 1fr;
+    }
+    
+    .row {
+      flex-direction: column;
+    }
+    
+    .output-actions {
+      flex-direction: column;
+    }
+    
+    .btn {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <!-- Header -->
+  <header class="header">
+    <h1>Expert Prompt Generator</h1>
+    <div class="subtitle">Master Level Analysis & Professional Reporting</div>
+  </header>
+
+  <!-- Main Grid -->
+  <div class="main-grid">
+    <!-- Left Column - Input & Experts -->
+    <div>
+      <!-- Photo & Location Card -->
+      <div class="card mb-3">
+        <div class="card-header">
+          <span class="icon">📷</span>
+          Data Input & Geolocation
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col">
+              <label class="form-label">Upload Photo Evidence</label>
+              <input type="file" class="form-control" accept="image/*" capture="environment">
+              <div class="text-muted mt-2">Camera or gallery upload supported</div>
+            </div>
+            <div class="col">
+              <img id="preview" style="display:none; width:100%; border-radius:8px; margin-top:8px;">
+            </div>
+          </div>
+          
+          <div class="row mt-2">
+            <div class="col">
+              <label class="form-label">Latitude</label>
+              <input type="text" class="form-control" id="lat" placeholder="Auto from EXIF or GPS">
+            </div>
+            <div class="col">
+              <label class="form-label">Longitude</label>
+              <input type="text" class="form-control" id="lon" placeholder="Auto from EXIF or GPS">
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col">
+              <label class="form-label">Timestamp</label>
+              <input type="text" class="form-control" id="timestamp" placeholder="Auto-generated">
+            </div>
+            <div class="col" style="display: flex; align-items: flex-end; gap: 0.5rem;">
+              <button class="btn btn-outline btn-sm" id="getGeoBtn">📍 Get GPS</button>
+              <button class="btn btn-outline btn-sm" id="clearBtn">🔄 Clear</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Master Experts Selection -->
+      <div class="card">
+        <div class="card-header">
+          <span class="icon">👨‍💼</span>
+          Master Level Experts Selection
+        </div>
+        <div class="card-body">
+          <div class="expert-categories">
+            <div class="form-label">Filter by Category</div>
+            <div class="category-tabs">
+              <div class="category-tab active" data-category="all">All Experts</div>
+              <div class="category-tab" data-category="k3">K3 & Safety</div>
+              <div class="category-tab" data-category="engineering">Engineering</div>
+              <div class="category-tab" data-category="forensic">Forensic & Investigation</div>
+            </div>
+          </div>
+
+          <div class="expert-grid" id="expertGrid">
+            <!-- Expert cards will be populated by JavaScript -->
+          </div>
+
+          <!-- Selected Experts Summary -->
+          <div class="selected-summary" id="selectedSummary" style="display: none;">
+            <div class="summary-header">
+              <span>✅</span>
+              Selected Master Experts (<span id="selectedCount">0</span>)
+            </div>
+            <div class="selected-list" id="selectedList">
+              <!-- Selected experts will appear here -->
+            </div>
+          </div>
+
+          <!-- Notes -->
+          <div class="form-group mt-3">
+            <label class="form-label">Additional Notes & Context</label>
+            <textarea class="form-control" id="note" placeholder="Detailed observations, specific concerns, time-sensitive information..."></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column - Controls & Output -->
+    <div>
+      <!-- Presets -->
+      <div class="card mb-3">
+        <div class="card-header">
+          <span class="icon">💾</span>
+          Expert Presets
+        </div>
+        <div class="card-body">
+          <div class="form-group">
+            <label class="form-label">Save/Load Preset</label>
+            <div class="row">
+              <div class="col">
+                <input type="text" class="form-control" id="presetName" placeholder="Preset name">
+              </div>
+              <div class="col">
+                <button class="btn btn-outline btn-sm" id="savePresetBtn">Save Preset</button>
+              </div>
+            </div>
+          </div>
+          <div id="presetList" class="text-muted">
+            No presets saved yet
+          </div>
+          <div class="output-actions">
+            <button class="btn btn-outline btn-sm" id="applyPresetBtn">Apply Selected</button>
+            <button class="btn btn-outline btn-sm" id="deletePresetBtn">Delete Selected</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Generation Controls -->
+      <div class="card mb-3">
+        <div class="card-header">
+          <span class="icon">⚙️</span>
+          Generation Settings
+        </div>
+        <div class="card-body">
+          <div class="form-group">
+            <label style="display: flex; align-items: center; gap: 0.5rem;">
+              <input type="checkbox" id="aggressiveToggle">
+              <span>Aggressive Mode (Direct Action-Oriented)</span>
+            </label>
+          </div>
+          <button class="btn btn-primary" id="generateBtn" style="width: 100%;">
+            🚀 Generate Master Analysis Prompt
+          </button>
+        </div>
+      </div>
+
+      <!-- Output -->
+      <div class="card output-section">
+        <div class="card-header">
+          <span class="icon">📋</span>
+          Master Analysis Output
+        </div>
+        <div class="card-body">
+          <textarea class="form-control" id="promptOutput" placeholder="Generated prompt will appear here..." style="min-height: 200px;"></textarea>
+          <div class="output-actions">
+            <button class="btn btn-secondary" id="copyUserBtn">📋 Copy User Prompt</button>
+            <button class="btn btn-secondary" id="copyBothBtn">📋 Copy Full Prompt</button>
+            <button class="btn btn-outline" id="downloadBtn">💾 Download</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Master Level Experts Data
+const MASTER_EXPERTS = [
+  {
+    id: 'master_k3_umum',
+    name: 'Dr. Ahmad Wijaya, S.T., M.K.K.K., Ph.D',
+    title: 'Master K3 Umum - Senior Consultant',
+    category: 'k3',
+    badge: 'MASTER LEVEL',
+    experience: '25+ years',
+    credentials: 'S3 K3, Certified IAF, Lead Auditor',
+    description: 'Expert in comprehensive risk assessment, safety management systems, and regulatory compliance with international standards.',
+    specialization: ['Risk Management', 'Safety Systems', 'Compliance Audit']
+  },
+  {
+    id: 'master_k3_konstruksi',
+    name: 'Ir. Bambang Santoso, M.T., CIPM',
+    title: 'Master K3 Konstruksi',
+    category: 'k3',
+    badge: 'MASTER LEVEL',
+    experience: '22+ years',
+    credentials: 'Professional Engineer, Certified International Project Manager',
+    description: 'Specialized in construction safety, high-risk work management, and structural integrity assessment.',
+    specialization: ['Construction Safety', 'Structural Assessment', 'Project Risk']
+  },
+  {
+    id: 'master_fire_safety',
+    name: 'Col. (Ret.) Dr. Rudi Hermawan, S.H., M.M.',
+    title: 'Master Fire Safety & Emergency Response',
+    category: 'k3',
+    badge: 'MASTER LEVEL',
+    experience: '30+ years',
+    credentials: 'Chief Fire Officer Certified, Doctor of Emergency Management',
+    description: 'Former fire department commander with expertise in fire prevention, emergency response, and disaster management.',
+    specialization: ['Fire Prevention', 'Emergency Response', 'Disaster Management']
+  },
+  {
+    id: 'master_structural',
+    name: 'Prof. Dr. Ir. Surya Dharma, M.Eng.',
+    title: 'Master Structural Engineer',
+    category: 'engineering',
+    badge: 'MASTER LEVEL',
+    experience: '28+ years',
+    credentials: 'IAI Certified, Professor of Structural Engineering',
+    description: 'Authority in structural analysis, building integrity, and construction methodology with extensive research background.',
+    specialization: ['Structural Analysis', 'Building Integrity', 'Seismic Design']
+  },
+  {
+    id: 'master_construction_mgmt',
+    name: 'Drs. Hendra Gunawan, M.B.A., CIPM',
+    title: 'Master Construction Management',
+    category: 'engineering',
+    badge: 'MASTER LEVEL',
+    experience: '24+ years',
+    credentials: 'PMI Level 3, Certified International Project Manager',
+    description: 'Expert in construction project management, quality control, and stakeholder coordination for complex projects.',
+    specialization: ['Project Management', 'Quality Control', 'Stakeholder Coordination']
+  },
+  {
+    id: 'master_forensic',
+    name: 'Dr. Amelia Putri, S.T., M.F.S., Ph.D',
+    title: 'Master Forensic Investigator',
+    category: 'forensic',
+    badge: 'MASTER LEVEL',
+    experience: '18+ years',
+    credentials: 'INAFIS Senior Certified, Doctor of Forensic Science',
+    description: 'Specialized in forensic engineering, failure analysis, and incident investigation with legal expertise.',
+    specialization: ['Forensic Engineering', 'Failure Analysis', 'Incident Investigation']
+  },
+  {
+    id: 'master_environmental',
+    name: 'Dr. Maria Dewi, S.T., M.Sc., Ph.D',
+    title: 'Master Environmental & Sustainability',
+    category: 'k3',
+    badge: 'MASTER LEVEL',
+    experience: '20+ years',
+    credentials: 'Certified Environmental Professional, Sustainability Expert',
+    description: 'Expert in environmental impact assessment, sustainability practices, and regulatory environmental compliance.',
+    specialization: ['Environmental Impact', 'Sustainability', 'Regulatory Compliance']
+  },
+  {
+    id: 'master_electrical',
+    name: 'Ir. Joko Prasetyo, M.Eng., P.E.',
+    title: 'Master Electrical Safety Engineer',
+    category: 'engineering',
+    badge: 'MASTER LEVEL',
+    experience: '26+ years',
+    credentials: 'Professional Engineer, Certified Electrical Safety Professional',
+    description: 'Authority in electrical systems safety, high-voltage operations, and electrical hazard prevention.',
+    specialization: ['Electrical Systems', 'High-Voltage Safety', 'Hazard Prevention']
+  }
+];
+
+// Expert Blocks for Prompt Generation
+const EXPERT_BLOCKS = {
+  'master_k3_umum': `ROLE: Master K3 Umum - Senior Consultant (25+ years experience)
+REQUIREMENTS: Provide comprehensive risk assessment, immediate safety actions, and detailed SOP. Focus on systemic safety management and regulatory compliance.`,
+  'master_k3_konstruksi': `ROLE: Master K3 Konstruksi - Professional Engineer (22+ years)
+REQUIREMENTS: Analyze construction safety aspects, structural risks, and provide step-by-step construction safety protocols.`,
+  'master_fire_safety': `ROLE: Master Fire Safety & Emergency Response (30+ years)
+REQUIREMENTS: Assess fire risks, emergency preparedness, and provide immediate response protocols with evacuation procedures.`,
+  'master_structural': `ROLE: Master Structural Engineer - Professor (28+ years)
+REQUIREMENTS: Evaluate structural integrity, identify potential failures, and provide engineering solutions with safety factors.`,
+  'master_construction_mgmt': `ROLE: Master Construction Management (24+ years)
+REQUIREMENTS: Analyze project management aspects, quality control measures, and provide coordination protocols.`,
+  'master_forensic': `ROLE: Master Forensic Investigator (18+ years)
+REQUIREMENTS: Conduct forensic analysis, identify root causes, and provide investigation methodology with evidence preservation.`,
+  'master_environmental': `ROLE: Master Environmental & Sustainability (20+ years)
+REQUIREMENTS: Assess environmental impacts, sustainability factors, and provide compliance protocols with regulatory requirements.`,
+  'master_electrical': `ROLE: Master Electrical Safety Engineer (26+ years)
+REQUIREMENTS: Evaluate electrical safety systems, identify electrical hazards, and provide safety protocols for electrical operations.`
+};
+
+// Initialize the application
+document.addEventListener('DOMContentLoaded', function() {
+  initializeExpertGrid();
+  setupEventListeners();
+  renderPresets();
+});
+
+// Initialize Expert Grid
+function initializeExpertGrid() {
+  const expertGrid = document.getElementById('expertGrid');
+  expertGrid.innerHTML = '';
+
+  MASTER_EXPERTS.forEach(expert => {
+    const expertCard = document.createElement('div');
+    expertCard.className = 'expert-card';
+    expertCard.dataset.id = expert.id;
+    expertCard.dataset.category = expert.category;
+    
+    expertCard.innerHTML = `
+      <div class="expert-header">
+        <div class="expert-avatar">${expert.name.split(' ').map(n => n[0]).join('')}</div>
+        <div class="expert-info">
+          <div class="expert-badge">${expert.badge}</div>
+          <div class="expert-name">${expert.name}</div>
+          <div class="expert-title">${expert.title}</div>
+        </div>
+      </div>
+      <div class="expert-description">${expert.description}</div>
+      <div class="expert-meta">
+        <div class="meta-item">⏱️ ${expert.experience}</div>
+        <div class="meta-item">📜 ${expert.credentials}</div>
+      </div>
+      <div class="expert-meta">
+        <div class="meta-item">🎯 ${expert.specialization.join(', ')}</div>
+      </div>
+    `;
+
+    expertCard.addEventListener('click', function() {
+      this.classList.toggle('selected');
+      updateSelectedExperts();
+    });
+
+    expertGrid.appendChild(expertCard);
+  });
+}
+
+// Update Selected Experts Summary
+function updateSelectedExperts() {
+  const selectedCards = document.querySelectorAll('.expert-card.selected');
+  const selectedSummary = document.getElementById('selectedSummary');
+  const selectedList = document.getElementById('selectedList');
+  const selectedCount = document.getElementById('selectedCount');
+
+  if (selectedCards.length === 0) {
+    selectedSummary.style.display = 'none';
+    return;
+  }
+
+  selectedSummary.style.display = 'block';
+  selectedCount.textContent = selectedCards.length;
+  
+  selectedList.innerHTML = '';
+  selectedCards.forEach(card => {
+    const expertId = card.dataset.id;
+    const expert = MASTER_EXPERTS.find(e => e.id === expertId);
+    
+    const item = document.createElement('div');
+    item.className = 'selected-item';
+    item.innerHTML = `
+      <div class="selected-name">${expert.name}</div>
+      <button class="remove-btn" data-id="${expert.id}">✕</button>
+    `;
+    
+    selectedList.appendChild(item);
+  });
+
+  // Add remove functionality
+  document.querySelectorAll('.remove-btn').forEach(btn => {
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      const expertId = this.dataset.id;
+      const card = document.querySelector(`.expert-card[data-id="${expertId}"]`);
+      card.classList.remove('selected');
+      updateSelectedExperts();
+    });
+  });
+}
+
+// Category Filtering
+function setupCategoryFiltering() {
+  const categoryTabs = document.querySelectorAll('.category-tab');
+  
+  categoryTabs.forEach(tab => {
+    tab.addEventListener('click', function() {
+      // Update active tab
+      categoryTabs.forEach(t => t.classList.remove('active'));
+      this.classList.add('active');
+      
+      const category = this.dataset.category;
+      filterExpertsByCategory(category);
+    });
+  });
+}
+
+function filterExpertsByCategory(category) {
+  const expertCards = document.querySelectorAll('.expert-card');
+  
+  expertCards.forEach(card => {
+    if (category === 'all' || card.dataset.category === category) {
+      card.style.display = 'block';
+    } else {
+      card.style.display = 'none';
+    }
+  });
+}
+
+// Setup Event Listeners
+function setupEventListeners() {
+  // Category filtering
+  setupCategoryFiltering();
+  
+  // File upload preview
+  document.querySelector('input[type="file"]').addEventListener('change', handleFileUpload);
+  
+  // GPS functionality
+  document.getElementById('getGeoBtn').addEventListener('click', getCurrentLocation);
+  
+  // Generate prompt
+  document.getElementById('generateBtn').addEventListener('click', generatePrompt);
+  
+  // Copy functionality
+  document.getElementById('copyUserBtn').addEventListener('click', copyUserPrompt);
+  document.getElementById('copyBothBtn').addEventListener('click', copyFullPrompt);
+  
+  // Download
+  document.getElementById('downloadBtn').addEventListener('click', downloadPrompt);
+  
+  // Clear
+  document.getElementById('clearBtn').addEventListener('click', clearAll);
+  
+  // Preset functionality
+  document.getElementById('savePresetBtn').addEventListener('click', savePreset);
+  document.getElementById('applyPresetBtn').addEventListener('click', applyPreset);
+  document.getElementById('deletePresetBtn').addEventListener('click', deletePreset);
+}
+
+// File Upload Handler
+function handleFileUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  
+  const preview = document.getElementById('preview');
+  preview.src = URL.createObjectURL(file);
+  preview.style.display = 'block';
+  
+  // Set timestamp
+  document.getElementById('timestamp').value = new Date().toISOString();
+}
+
+// GPS Functionality
+function getCurrentLocation() {
+  const btn = document.getElementById('getGeoBtn');
+  const originalText = btn.innerHTML;
+  
+  if (!navigator.geolocation) {
+    alert('Geolocation is not supported by this browser.');
+    return;
+  }
+  
+  btn.innerHTML = '<div class="loading"></div> Getting Location...';
+  btn.disabled = true;
+  
+  navigator.geolocation.getCurrentPosition(
+    position => {
+      document.getElementById('lat').value = position.coords.latitude.toFixed(6);
+      document.getElementById('lon').value = position.coords.longitude.toFixed(6);
+      btn.innerHTML = originalText;
+      btn.disabled = false;
+    },
+    error => {
+      alert('Error getting location: ' + error.message);
+      btn.innerHTML = originalText;
+      btn.disabled = false;
+    },
+    { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 }
+  );
+}
+
+// Preset Management
+const PRESET_KEY = 'expert_prompt_presets';
+
+function loadPresets() {
+  try {
+    return JSON.parse(localStorage.getItem(PRESET_KEY) || '{}');
+  } catch (e) {
+    return {};
+  }
+}
+
+function savePresets(presets) {
+  localStorage.setItem(PRESET_KEY, JSON.stringify(presets));
+}
+
+function renderPresets() {
+  const presetList = document.getElementById('presetList');
+  const presets = loadPresets();
+  const keys = Object.keys(presets);
+  
+  if (keys.length === 0) {
+    presetList.innerHTML = '<div class="text-muted">No presets saved yet</div>';
+    return;
+  }
+  
+  presetList.innerHTML = '';
+  keys.forEach(key => {
+    const presetItem = document.createElement('div');
+    presetItem.style.display = 'flex';
+    presetItem.style.justifyContent = 'space-between';
+    presetItem.style.alignItems = 'center';
+    presetItem.style.padding = '0.5rem 0';
+    presetItem.style.borderBottom = '1px solid #eee';
+    
+    presetItem.innerHTML = `
+      <div>${key}</div>
+      <div>
+        <input type="radio" name="preset" value="${key}">
+      </div>
+    `;
+    
+    presetList.appendChild(presetItem);
+  });
+}
+
+function savePreset() {
+  const name = document.getElementById('presetName').value.trim();
+  if (!name) {
+    alert('Please enter a preset name.');
+    return;
+  }
+  
+  const selectedExperts = Array.from(document.querySelectorAll('.expert-card.selected'))
+    .map(card => card.dataset.id);
+  
+  if (selectedExperts.length === 0) {
+    alert('Please select at least one expert.');
+    return;
+  }
+  
+  const presets = loadPresets();
+  presets[name] = selectedExperts;
+  savePresets(presets);
+  renderPresets();
+  
+  document.getElementById('presetName').value = '';
+  alert(`Preset "${name}" saved successfully.`);
+}
+
+function applyPreset() {
+  const selectedPreset = document.querySelector('input[name="preset"]:checked');
+  if (!selectedPreset) {
+    alert('Please select a preset to apply.');
+    return;
+  }
+  
+  const presets = loadPresets();
+  const expertIds = presets[selectedPreset.value];
+  
+  // Clear all selections
+  document.querySelectorAll('.expert-card.selected').forEach(card => {
+    card.classList.remove('selected');
+  });
+  
+  // Apply preset selections
+  expertIds.forEach(id => {
+    const card = document.querySelector(`.expert-card[data-id="${id}"]`);
+    if (card) {
+      card.classList.add('selected');
+    }
+  });
+  
+  updateSelectedExperts();
+  alert(`Preset "${selectedPreset.value}" applied successfully.`);
+}
+
+function deletePreset() {
+  const selectedPreset = document.querySelector('input[name="preset"]:checked');
+  if (!selectedPreset) {
+    alert('Please select a preset to delete.');
+    return;
+  }
+  
+  if (!confirm(`Are you sure you want to delete preset "${selectedPreset.value}"?`)) {
+    return;
+  }
+  
+  const presets = loadPresets();
+  delete presets[selectedPreset.value];
+  savePresets(presets);
+  renderPresets();
+  
+  alert(`Preset "${selectedPreset.value}" deleted successfully.`);
+}
+
+// Prompt Generation
+function generatePrompt() {
+  const selectedExperts = Array.from(document.querySelectorAll('.expert-card.selected'))
+    .map(card => card.dataset.id);
+  
+  if (selectedExperts.length === 0 && !confirm('No experts selected. Continue with general analysis?')) {
+    return;
+  }
+  
+  // Build context
+  const context = {
+    timestamp: document.getElementById('timestamp').value || new Date().toISOString(),
+    location: (document.getElementById('lat').value && document.getElementById('lon').value) ? {
+      lat: document.getElementById('lat').value,
+      lon: document.getElementById('lon').value
+    } : null,
+    image_attached: document.querySelector('input[type="file"]').files.length > 0 ? 'Yes' : 'No',
+    notes: document.getElementById('note').value || ''
+  };
+  
+  // Build expert blocks
+  const expertBlocks = selectedExperts.map(id => EXPERT_BLOCKS[id] || `ROLE: ${id}\nREQUIREMENTS: Provide expert analysis.`).join('\n\n');
+  
+  // Build instructions
+  const instructions = `INSTRUCTIONS: For each selected expert role, provide:
+1. Expert Analysis (2-4 sentences per expert)
+2. Immediate Actions (1-8 critical actions)
+3. Step-by-Step SOP (minimum 6 steps where relevant)
+4. Protocols & References
+5. Required Evidence
+6. Decision Checklist (5 key points)
+
+Output must begin with JSON schema including: risk_level, risk_score, expert_analysis, immediate_actions, sop_steps, references, evidence_required, decision_checklist, confidence_level, verification_notes.
+
+After JSON, provide human-readable report with clear headings and actionable steps.`;
+
+  // Build system message
+  const systemMessage = document.getElementById('aggressiveToggle').checked 
+    ? `You are MASTER-EXPERTS-AGGREGATOR — authoritative senior professionals with decades of experience. Answer in Indonesian. BE DIRECT, ACTION-FOCUSED, and COMMANDING. Return JSON then executive human-readable report.`
+    : `You are MASTER-EXPERTS-AGGREGATOR — ensemble of senior professionals with decades of collective experience. Answer in Indonesian. Return comprehensive JSON analysis then detailed human-readable report.`;
+
+  // Build user message
+  const userMessage = `MASTER LEVEL ANALYSIS REQUEST
+
+STRUCTURED CONTEXT:
+${JSON.stringify(context, null, 2)}
+
+SELECTED MASTER EXPERTS:
+${expertBlocks || '[General Master Level Analysis]'}
+
+${instructions}`;
+
+  const combinedPrompt = `--- SYSTEM MESSAGE ---
+${systemMessage}
+
+--- USER MESSAGE ---
+${userMessage}`;
+
+  document.getElementById('promptOutput').value = combinedPrompt;
+}
+
+// Copy Functions
+function copyUserPrompt() {
+  const text = document.getElementById('promptOutput').value;
+  if (!text) {
+    alert('Please generate a prompt first.');
+    return;
+  }
+  
+  const userIndex = text.indexOf('--- USER MESSAGE ---');
+  const userText = userIndex >= 0 ? text.slice(userIndex + '--- USER MESSAGE ---'.length).trim() : text;
+  
+  navigator.clipboard.writeText(userText).then(() => {
+    alert('User prompt copied to clipboard!');
+  });
+}
+
+function copyFullPrompt() {
+  const text = document.getElementById('promptOutput').value;
+  if (!text) {
+    alert('Please generate a prompt first.');
+    return;
+  }
+  
+  navigator.clipboard.writeText(text).then(() => {
+    alert('Full prompt (System + User) copied to clipboard!');
+  });
+}
+
+// Download Function
+function downloadPrompt() {
+  const text = document.getElementById('promptOutput').value;
+  if (!text) {
+    alert('Please generate a prompt first.');
+    return;
+  }
+  
+  const blob = new Blob([text], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'master-analysis-prompt.txt';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// Clear Function
+function clearAll() {
+  // Clear file input and preview
+  const fileInput = document.querySelector('input[type="file"]');
+  fileInput.value = '';
+  document.getElementById('preview').style.display = 'none';
+  
+  // Clear location and timestamp
+  document.getElementById('lat').value = '';
+  document.getElementById('lon').value = '';
+  document.getElementById('timestamp').value = '';
+  document.getElementById('note').value = '';
+  document.getElementById('promptOutput').value = '';
+  
+  // Clear expert selections
+  document.querySelectorAll('.expert-card.selected').forEach(card => {
+    card.classList.remove('selected');
+  });
+  updateSelectedExperts();
+  
+  alert('All inputs cleared successfully.');
+}
+
+// Initialize category filtering on load
+setTimeout(() => {
+  setupCategoryFiltering();
+}, 100);
+</script>
+</body>
+</html>
