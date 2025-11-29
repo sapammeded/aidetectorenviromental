@@ -2872,6 +2872,84 @@ textarea {
 })();
 </script>
 <!-- END: Expert Category + Auto-Generate Description -->
+<!-- BEGIN: Expert attacher for prompt-based UI -->
+<script>
+(function(){
+  // Try to insert an "Expert" button next to any node that contains the hint text
+  function insertExpertButtonNearHint(){
+    // common hint text (match lower case, ignore spaces)
+    const hintText = 'klik pensil untuk deskripsi';
+    // find text nodes containing hint
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
+    let n;
+    const found = [];
+    while(n = walker.nextNode()){
+      if(n.nodeValue && n.nodeValue.toLowerCase().includes(hintText)){
+        found.push(n);
+      }
+    }
+    if(found.length === 0){
+      // another fallback: find any element with title or aria-label indicating "edit"
+      const alt = document.querySelectorAll('[title*="deskrip"], [title*="edit"], [aria-label*="edit"]');
+      if(alt && alt.length){
+        alt.forEach(el => tryInsert(el));
+        return;
+      }
+      return; // nothing to attach to
+    }
+    found.forEach(textNode => {
+      // pick parent element to attach the button
+      const parent = textNode.parentElement;
+      if(parent){
+        tryInsert(parent);
+      }
+    });
+  }
 
+  function tryInsert(targetEl){
+    // avoid inserting duplicate button
+    if(targetEl.querySelector && targetEl.querySelector('.btn-expert-attached')) return;
+    // create wrapper if needed
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'btn-expert-attached';
+    btn.textContent = 'Expert';
+    btn.style.marginLeft = '8px';
+    btn.style.padding = '6px 10px';
+    btn.style.borderRadius = '8px';
+    btn.style.background = '#0b63d6';
+    btn.style.color = '#fff';
+    btn.style.border = 'none';
+    btn.style.cursor = 'pointer';
+    btn.addEventListener('click', function(e){
+      e.stopPropagation();
+      e.preventDefault();
+      const modal = document.getElementById('expertModal');
+      if(modal){ modal.style.display='flex'; modal.setAttribute('aria-hidden','false'); }
+      // if no modal present, fallback: call global autofill
+      else if(window.autoFillExpertDescription) window.autoFillExpertDescription();
+    }, {passive:true});
+    // append after the targetEl if possible
+    try {
+      // put button after target's last child
+      targetEl.appendChild(btn);
+    } catch(e){
+      // fallback: insert after element in DOM
+      if(targetEl.parentNode) targetEl.parentNode.insertBefore(btn, targetEl.nextSibling);
+    }
+  }
+
+  // run after DOM ready (and try again a few times because app may build UI lazily)
+  document.addEventListener('DOMContentLoaded', insertExpertButtonNearHint);
+  // also try multiple times while user uses app (UI may render later)
+  let tries = 0;
+  const iv = setInterval(()=>{
+    try{ insertExpertButtonNearHint(); }catch(e){}
+    tries++;
+    if(tries>12) clearInterval(iv);
+  }, 700);
+})();
+</script>
+<!-- END: Expert attacher for prompt-based UI -->
 </body>
 </html>
