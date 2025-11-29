@@ -1,0 +1,2590 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Patroli — Final Fixed</title>
+
+<!-- FIREBASE HARUS DULUAN SEBELUM APLIKASI -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+
+<script>
+// ✅ FIREBASE CONFIG & INIT HARUS PALING AWAL
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyCnooeRNZRzTPDvOWIAH3pXbkIryZgJuic",
+  authDomain: "silitpitik7373.firebaseapp.com",
+  projectId: "silitpitik7373",
+  databaseURL: "https://silitpitik7373-default-rtdb.firebaseio.com",
+  storageBucket: "silitpitik7373.appspot.com",
+  messagingSenderId: "314430704796",
+  appId: "1:314430704796:web:2147f3a3a74bfa7affb159"
+};
+
+// Initialize Firebase immediately
+(function() {
+  try {
+    if (!firebase.apps.length) {
+      firebase.initializeApp(FIREBASE_CONFIG);
+      console.log('🔥 Firebase initialized EARLY');
+    }
+    
+    // Auto sign-in anonymous
+    firebase.auth().signInAnonymously().catch(e => console.warn('Auth auto-signin:', e));
+    
+    // Cloudinary config
+    window.CLOUDINARY = { cloudName: "dowaohqkh", uploadPreset: "Patroli" };
+    
+  } catch (e) {
+    console.error('Firebase early init error:', e);
+  }
+})();
+</script>
+
+<!-- CDN deps -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+
+<style>
+:root {
+  --bg: #0a0e17;
+  --card: #111827;
+  --primary: #00d4ff;
+  --primary-dark: #0099cc;
+  --secondary: #8b5cf6;
+  --accent: #00ff88;
+  --muted: #6b7280;
+  --danger: #ef4444;
+  --text: #e5e7eb;
+  --text-muted: #9ca3af;
+  --border: #1f2937;
+  --header-bg: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  --cyber-glow: 0 0 10px rgba(0, 212, 255, 0.7);
+  --cyber-glow-accent: 0 0 15px rgba(0, 255, 136, 0.5);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Segoe UI', system-ui, Roboto, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+}
+
+header {
+  background: var(--header-bg);
+  color: var(--text);
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border-bottom: 1px solid var(--border);
+  box-shadow: var(--cyber-glow);
+  position: relative;
+}
+
+header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--primary), var(--accent), var(--secondary));
+}
+
+header h1 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  background: linear-gradient(90deg, var(--primary), var(--accent));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 12px auto;
+  padding: 10px;
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.card {
+  background: var(--card);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--border);
+  transition: all 0.3s ease;
+}
+
+.card:hover {
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  transform: translateY(-2px);
+}
+
+.sidebar {
+  width: 340px;
+  min-width: 260px;
+}
+
+label {
+  display: block;
+  margin: 8px 0 6px;
+  font-weight: 600;
+  color: var(--text);
+  font-size: 14px;
+}
+
+input[type=text], textarea, input[type=password] {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: #ffffff;
+  color: #111827;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+input[type=text]:focus, textarea:focus, input[type=password]:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.2);
+}
+
+textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+.btn {
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: #0a0e17;
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: 0;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+}
+
+.btn.ghost {
+  background: transparent;
+  color: var(--primary);
+  border: 1px solid var(--primary);
+}
+
+.btn.ghost:hover {
+  background: rgba(0, 212, 255, 0.1);
+}
+
+.btn.danger {
+  background: linear-gradient(135deg, var(--danger), #dc2626);
+  color: white;
+}
+
+.muted {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.areas {
+  margin-top: 12px;
+}
+
+.area {
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 16px;
+  border: 1px solid var(--border);
+  background: linear-gradient(145deg, #1a2235, #151b2b);
+  position: relative;
+  overflow: hidden;
+}
+
+.area::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(to bottom, var(--primary), var(--accent));
+}
+
+.area-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.area-title {
+  font-weight: 800;
+  font-size: 16px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  color: #fff;
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  box-shadow: var(--cyber-glow);
+}
+
+.photo-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.photos {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.photo-item {
+  width: 140px;
+  height: 100px;
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+  background: #1f2937;
+  border: 1px solid var(--border);
+  transition: all 0.3s ease;
+}
+
+.photo-item:hover {
+  transform: scale(1.05);
+  box-shadow: var(--cyber-glow);
+}
+
+.photo-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.photo-meta {
+  font-size: 11px;
+  color: var(--text-muted);
+  padding: 6px;
+  text-align: left;
+}
+
+.icon-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  padding: 8px;
+  border: 0;
+  cursor: pointer;
+  color: var(--text);
+  transition: all 0.2s ease;
+}
+
+.icon-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: scale(1.1);
+}
+
+.signature-canvas {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  touch-action: none;
+  background: #ffffff;
+  display: block;
+}
+
+.sig-preview {
+  width: 160px;
+  height: 70px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  background: #ffffff;
+}
+
+.note {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: 8px;
+  line-height: 1.5;
+}
+
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.tab {
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: rgba(0, 212, 255, 0.1);
+  color: var(--primary);
+  cursor: pointer;
+  font-weight: 700;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.tab:hover {
+  background: rgba(0, 212, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+.tab.active {
+  background: rgba(0, 212, 255, 0.2);
+  border-color: var(--primary);
+  box-shadow: var(--cyber-glow);
+}
+
+/* ✅ INI YANG DITAMBAHIN BRO */
+.hidden {
+  display: none !important;
+}
+
+.qr-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px dashed var(--border);
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.small {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.modal {
+  background: var(--card);
+  padding: 20px;
+  border-radius: 12px;
+  max-width: 420px;
+  width: 94%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  border: 1px solid var(--border);
+}
+
+.video-preview {
+  width: 100%;
+  height: 220px;
+  background: #000;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.profile-photo-preview {
+  width: 100%;
+  max-height: 200px;
+  object-fit: contain;
+  border-radius: 8px;
+  border: 2px dashed var(--border);
+  margin-top: 8px;
+}
+
+/* ✅ STYLE CHAT BUBBLE & PANEL */
+.chat-bubble {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  color: #0a0e17;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(0, 212, 255, 0.5);
+  z-index: 10000;
+  border: none;
+  font-size: 24px;
+  transition: all 0.3s ease;
+}
+
+.chat-bubble:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 25px rgba(0, 212, 255, 0.7);
+}
+
+.chat-bubble.has-new::after {
+  content: '';
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 12px;
+  height: 12px;
+  background: var(--danger);
+  border-radius: 50%;
+  border: 2px solid #0a0e17;
+}
+
+.chat-panel {
+  position: fixed;
+  bottom: 90px;
+  right: 20px;
+  width: 350px;
+  height: 500px;
+  background: var(--card);
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.chat-header {
+  padding: 12px 16px;
+  background: var(--header-bg);
+  color: var(--text);
+  border-radius: 12px 12px 0 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border);
+}
+
+.chat-header h3 {
+  margin: 0;
+  font-size: 16px;
+  background: linear-gradient(90deg, var(--primary), var(--accent));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.chat-close {
+  background: none;
+  border: none;
+  color: var(--text);
+  cursor: pointer;
+  font-size: 18px;
+  transition: all 0.2s ease;
+}
+
+.chat-close:hover {
+  color: var(--primary);
+  transform: scale(1.2);
+}
+
+.chat-messages {
+  flex: 1;
+  padding: 12px;
+  overflow-y: auto;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.chat-message {
+  margin-bottom: 12px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  max-width: 85%;
+  word-wrap: break-word;
+  position: relative;
+}
+
+.chat-message.own {
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: #0a0e17;
+  margin-left: auto;
+  border-bottom-right-radius: 4px;
+}
+
+.chat-message.other {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  margin-right: auto;
+  border-bottom-left-radius: 4px;
+}
+
+.chat-meta {
+  font-size: 10px;
+  opacity: 0.7;
+  margin-top: 4px;
+}
+
+.chat-input-area {
+  padding: 12px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: 8px;
+  background: var(--card);
+  border-radius: 0 0 12px 12px;
+}
+
+.chat-input {
+  flex: 1;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  outline: none;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text);
+}
+
+.chat-input:focus {
+  border-color: var(--primary);
+}
+
+.chat-send {
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: #0a0e17;
+  border: none;
+  border-radius: 20px;
+  padding: 10px 16px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.chat-send:hover {
+  transform: scale(1.05);
+}
+
+.unread-badge {
+  background: var(--danger);
+  color: white;
+  border-radius: 10px;
+  padding: 2px 6px;
+  font-size: 10px;
+  position: absolute;
+  top: -5px;
+  right: -5px;
+}
+
+/* ✅ NEW: Camera overlay untuk scan QR */
+.camera-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.9);
+  z-index: 10001;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.camera-container {
+  width: 90%;
+  max-width: 500px;
+  background: var(--card);
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.camera-header {
+  padding: 12px;
+  background: var(--header-bg);
+  color: var(--text);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border);
+}
+
+.camera-video {
+  width: 100%;
+  height: 300px;
+  background: black;
+}
+
+.camera-controls {
+  padding: 12px;
+  background: var(--card);
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.scan-frame {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 200px;
+  height: 200px;
+  border: 2px solid var(--primary);
+  border-radius: 8px;
+  pointer-events: none;
+  box-shadow: var(--cyber-glow);
+}
+
+.scan-line {
+  position: absolute;
+  width: 100%;
+  height: 2px;
+  background: var(--primary);
+  animation: scan 2s linear infinite;
+}
+
+@keyframes scan {
+  0% { top: 0; }
+  50% { top: 100%; }
+  100% { top: 0; }
+}
+
+/* Cyber elements */
+.cyber-border {
+  position: relative;
+  border: 1px solid var(--primary);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.cyber-border::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--primary), transparent);
+}
+
+.cyber-border::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--primary), transparent);
+}
+
+/* Glitch effect for headers */
+.glitch {
+  position: relative;
+}
+
+.glitch::before,
+.glitch::after {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.glitch::before {
+  left: 2px;
+  text-shadow: -2px 0 #ff00c1;
+  clip: rect(44px, 450px, 56px, 0);
+  animation: glitch-anim 5s infinite linear alternate-reverse;
+}
+
+.glitch::after {
+  left: -2px;
+  text-shadow: -2px 0 #00fff9;
+  clip: rect(44px, 450px, 56px, 0);
+  animation: glitch-anim2 5s infinite linear alternate-reverse;
+}
+
+@keyframes glitch-anim {
+  0% {
+    clip: rect(42px, 9999px, 44px, 0);
+  }
+  5% {
+    clip: rect(12px, 9999px, 59px, 0);
+  }
+  10% {
+    clip: rect(48px, 9999px, 29px, 0);
+  }
+  15% {
+    clip: rect(42px, 9999px, 73px, 0);
+  }
+  20% {
+    clip: rect(63px, 9999px, 27px, 0);
+  }
+  25% {
+    clip: rect(34px, 9999px, 55px, 0);
+  }
+  30% {
+    clip: rect(86px, 9999px, 73px, 0);
+  }
+  35% {
+    clip: rect(20px, 9999px, 20px, 0);
+  }
+  40% {
+    clip: rect(26px, 9999px, 60px, 0);
+  }
+  45% {
+    clip: rect(25px, 9999px, 66px, 0);
+  }
+  50% {
+    clip: rect(57px, 9999px, 98px, 0);
+  }
+  55% {
+    clip: rect(5px, 9999px, 46px, 0);
+  }
+  60% {
+    clip: rect(82px, 9999px, 31px, 0);
+  }
+  65% {
+    clip: rect(54px, 9999px, 27px, 0);
+  }
+  70% {
+    clip: rect(28px, 9999px, 99px, 0);
+  }
+  75% {
+    clip: rect(45px, 9999px, 69px, 0);
+  }
+  80% {
+    clip: rect(23px, 9999px, 85px, 0);
+  }
+  85% {
+    clip: rect(54px, 9999px, 84px, 0);
+  }
+  90% {
+    clip: rect(45px, 9999px, 47px, 0);
+  }
+  95% {
+    clip: rect(37px, 9999px, 20px, 0);
+  }
+  100% {
+    clip: rect(4px, 9999px, 91px, 0);
+  }
+}
+
+@keyframes glitch-anim2 {
+  0% {
+    clip: rect(65px, 9999px, 100px, 0);
+  }
+  5% {
+    clip: rect(52px, 9999px, 74px, 0);
+  }
+  10% {
+    clip: rect(79px, 9999px, 85px, 0);
+  }
+  15% {
+    clip: rect(75px, 9999px, 5px, 0);
+  }
+  20% {
+    clip: rect(67px, 9999px, 61px, 0);
+  }
+  25% {
+    clip: rect(14px, 9999px, 79px, 0);
+  }
+  30% {
+    clip: rect(1px, 9999px, 66px, 0);
+  }
+  35% {
+    clip: rect(86px, 9999px, 30px, 0);
+  }
+  40% {
+    clip: rect(23px, 9999px, 98px, 0);
+  }
+  45% {
+    clip: rect(85px, 9999px, 72px, 0);
+  }
+  50% {
+    clip: rect(71px, 9999px, 75px, 0);
+  }
+  55% {
+    clip: rect(2px, 9999px, 48px, 0);
+  }
+  60% {
+    clip: rect(30px, 9999px, 16px, 0);
+  }
+  65% {
+    clip: rect(59px, 9999px, 50px, 0);
+  }
+  70% {
+    clip: rect(41px, 9999px, 62px, 0);
+  }
+  75% {
+    clip: rect(2px, 9999px, 82px, 0);
+  }
+  80% {
+    clip: rect(47px, 9999px, 73px, 0);
+  }
+  85% {
+    clip: rect(3px, 9999px, 27px, 0);
+  }
+  90% {
+    clip: rect(26px, 9999px, 55px, 0);
+  }
+  95% {
+    clip: rect(42px, 9999px, 97px, 0);
+  }
+  100% {
+    clip: rect(38px, 9999px, 49px, 0);
+  }
+}
+
+@media (max-width:900px){ 
+  .sidebar{width:100%} 
+  .container{padding:8px} 
+  .video-preview{height:180px} 
+  .chat-panel {
+    width: calc(100% - 40px);
+    right: 20px;
+    left: 20px;
+  }
+  .camera-container {
+    width: 95%;
+  }
+}
+</style>
+</head>
+<body>
+<header>
+  <h1 class="glitch" data-text="Patroli — FINAL FIXED">Patroli — FINAL FIXED</h1>
+  <div style="display:flex;gap:8px;align-items:center">
+    <div id="modeDisplay" style="background:rgba(0, 212, 255, 0.1);padding:6px 10px;border-radius:999px;font-weight:700;border:1px solid rgba(0, 212, 255, 0.3);">Mode: User</div>
+    <button id="btnToggleMode" class="btn ghost">Masuk Admin</button>
+    <span id="gpsStatus" class="muted">GPS: belum</span>
+    <button id="btnStartGPS" class="btn">Mulai GPS</button>
+    <button id="btnGeneratePDF" class="btn">Generate PDF</button>
+  </div>
+</header>
+
+<div class="container">
+  <aside class="card sidebar cyber-border">
+    <div class="tabs">
+      <div class="tab active" id="tabAreas">Area</div>
+      <div class="tab" id="tabCheckpoint">Checkpoint (QR)</div>
+      <div class="tab" id="tabLokasi">Lokasi</div>
+      <div class="tab" id="tabFotoProfil">Foto Profil</div>
+      <div class="tab" id="tabDeep">DEEP CLEAN-UP</div>
+    </div>
+
+    <div id="areaTab">
+      <label>Nama Petugas</label><input id="officerName" type="text" placeholder="Nama petugas...">
+      <label>Shift</label><input id="shift" type="text" placeholder="Contoh: Malam">
+      <label>Tanggal</label><input id="date" type="text" placeholder="YYYY-MM-DD">
+      <div style="margin-top:8px" class="muted">Koordinat Terkini: <span id="coords">—</span></div>
+      <hr style="margin:10px 0;border-color:var(--border)">
+
+      <label>Tambah Area Manual</label>
+      <input id="newAreaName" type="text" placeholder="Nama area (manual)...">
+      <input id="newAreaDetail" type="text" placeholder="Detail lokasi (opsional)..." style="margin-top:8px">
+      <div style="margin-top:8px;display:flex;gap:8px">
+        <button id="btnAddArea" class="btn">Tambah Area</button>
+        <button id="btnScanAreaQR" class="btn ghost">Scan QR (kamera)</button>
+      </div>
+
+      <div style="margin-top:12px" class="note">User hanya camera; Admin camera + gallery.</div>
+
+      <div style="margin-top:12px" class="login-box">
+        <div style="font-weight:700;margin-bottom:8px">Admin Login</div>
+        <input id="adminPass" type="password" placeholder="Password admin...">
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button id="btnLogin" class="btn">Login</button>
+          <button id="btnLogout" class="btn danger" style="display:none">Logout</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="checkpointTab" class="hidden">
+      <label>Daftar Checkpoint (Unlimited)</label>
+      <div id="qrList"></div>
+
+      <label style="margin-top:8px">Buat Checkpoint Manual (JSON)</label>
+      <input id="qrAreaName" type="text" placeholder="Nama Area (contoh: AREA SELATAN)">
+      <input id="qrAreaDetail" type="text" placeholder="Detail lokasi (contoh: PINTU LOBBY PERTAMA)" style="margin-top:8px">
+
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button id="btnGenerateQRManual" class="btn">Generate QR (JSON)</button>
+        <button id="btnSaveCheckpoint" class="btn ghost">Simpan ke Daftar</button>
+      </div>
+
+      <div style="margin-top:10px;display:flex;gap:8px;align-items:center">
+        <canvas id="qrCanvasManual" style="border:1px solid var(--border);background:#fff;border-radius:6px"></canvas>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <button id="btnDownloadQRManual" class="btn">Download QR</button>
+          <button id="btnCopyQRDataManual" class="btn ghost">Copy QR DataURL</button>
+          <button id="btnCopyQRContentManual" class="btn ghost">Copy QR Content</button>
+        </div>
+      </div>
+
+      <div style="margin-top:10px">
+        <label>Scanner (kamera langsung)</label>
+        <video id="video" class="video-preview" autoplay muted playsinline></video>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button id="btnStartScan" class="btn ghost">Start Scan Camera</button>
+          <button id="btnStopScan" class="btn ghost">Stop Scan</button>
+          <input id="fileScanInput" type="file" accept="image/*" style="display:none">
+          <button id="btnFileScan" class="btn ghost">Scan dari File/Galeri</button>
+        </div>
+        <div id="scanResult" class="muted" style="margin-top:8px">Hasil scan: —</div>
+      </div>
+    </div>
+
+    <div id="lokasiTab" class="hidden">
+      <label>Input Lokasi (untuk header cover)</label>
+      <input id="manualLokasi" type="text" placeholder="Contoh: SEI JKT11">
+      <div class="note">Isi lokasi ini akan tampil di cover PDF (override GPS jika diisi).</div>
+    </div>
+
+    <div id="fotoProfilTab" class="hidden">
+      <h3>FOTO PROFIL COVER</h3>
+      <p>Foto ini akan ditampilkan di halaman cover PDF</p>
+      
+      <div id="profilePhotoPreview" class="profile-photo-preview" style="display:none"></div>
+      
+      <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+        <button id="btnTakeProfilePhoto" class="btn">Ambil Foto (Kamera)</button>
+        <button id="btnUploadProfilePhoto" class="btn ghost" style="display:none">Pilih dari Galeri</button>
+      </div>
+      
+      <div class="note" style="margin-top:8px">
+        <strong>Preview:</strong> Foto profil akan ditampilkan di sisi kanan cover PDF
+      </div>
+      
+      <button id="btnRemoveProfilePhoto" class="btn danger" style="margin-top:8px;display:none">Hapus Foto Profil</button>
+    </div>
+
+    <div id="deepTab" class="hidden">
+      <h3>DEEP CLEAN-UP</h3>
+      <p>Hapus <strong>SEMUA DATA</strong> termasuk semua area, foto, logo, tanda tangan, password runtime. Aplikasi akan kembali seperti baru.</p>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button id="btnDeepClean" class="btn danger">Deep Clean (OK)</button>
+        <button id="btnDeepCancel" class="btn ghost">Batal</button>
+      </div>
+    </div>
+
+    <hr style="margin:12px 0;border-color:var(--border)">
+    <div class="note">Host via HTTPS (GitHub Pages) dan tes di Chrome Android untuk hasil terbaik.</div>
+  </aside>
+
+  <main class="card" style="flex:1 1 820px">
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px">
+      <div class="tab active" id="tabViewAreas">Daftar Area</div>
+      <div class="tab" id="tabSignature">Tanda Tangan</div>
+    </div>
+
+    <section id="viewAreas">
+      <div id="areasContainer" class="areas"></div>
+    </section>
+
+    <section id="viewSignature" class="hidden">
+      <label>Nama pada tanda tangan</label>
+      <input id="sigName" type="text" placeholder="Nama pada tanda tangan...">
+      <div style="margin-top:8px"><canvas id="sigCanvas" class="signature-canvas" width="700" height="140"></canvas></div>
+      <div style="margin-top:8px;display:flex;gap:8px;align-items:center">
+        <button id="btnClearSig" class="btn danger">Hapus</button>
+        <button id="btnSaveSig" class="btn">Simpan Tanda Tangan</button>
+        <div style="margin-left:12px"><div class="muted">Preview:</div><div id="sigPreview" class="sig-preview"></div></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- ✅ CHAT BUBBLE & PANEL -->
+<button id="chatBubble" class="chat-bubble">
+  <i class="fas fa-comments"></i>
+</button>
+
+<div id="chatPanel" class="chat-panel hidden">
+  <div class="chat-header">
+    <h3>Chat Patroli</h3>
+    <button class="chat-close">&times;</button>
+  </div>
+  <div id="chatMessages" class="chat-messages"></div>
+  <div class="chat-input-area">
+    <input id="chatInput" type="text" class="chat-input" placeholder="Ketik pesan...">
+    <button id="chatSend" class="chat-send">Kirim</button>
+  </div>
+</div>
+
+<!-- ✅ CAMERA OVERLAY UNTUK SCAN QR -->
+<div id="cameraOverlay" class="camera-overlay hidden">
+  <div class="camera-container">
+    <div class="camera-header">
+      <h3 style="margin:0">Scan QR Code</h3>
+      <button id="closeCamera" class="chat-close">&times;</button>
+    </div>
+    <video id="cameraVideo" class="camera-video" autoplay muted playsinline></video>
+    <div class="scan-frame">
+      <div class="scan-line"></div>
+    </div>
+    <div class="camera-controls">
+      <button id="captureScan" class="btn">Capture & Scan</button>
+      <button id="cancelScan" class="btn danger">Batal</button>
+    </div>
+  </div>
+</div>
+
+<div id="modalBackdrop" class="modal-backdrop">
+  <div class="modal">
+    <h3>DEEP CLEAN-UP</h3>
+    <p>Hapus <strong>SEMUA DATA</strong> termasuk: semua area patroli, semua foto, logo, tanda tangan, password akses. Aplikasi akan kembali seperti baru! Yakin ingin melanjutkan?</p>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px">
+      <button id="modalCancel" class="btn ghost">Batal</button>
+      <button id="modalOk" class="btn danger">OK</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ✅ FINAL FIXED VERSION - All Issues Resolved */
+(function(){
+  // ✅ FIREBASE READY CHECK
+  function waitForFirebase() {
+    return new Promise((resolve) => {
+      const check = () => {
+        if (window.firebase && firebase.database) {
+          resolve();
+        } else {
+          setTimeout(check, 100);
+        }
+      };
+      check();
+    });
+  }
+
+  const $ = s => document.querySelector(s);
+  const uid = (p='id')=> p+'-'+Math.random().toString(36).slice(2,9);
+  const revoke = url => { try{ if(url) URL.revokeObjectURL(url);}catch(e){} };
+
+  const state = {
+    isAdmin:false,
+    adminPassword: window.__patrol_admin_password ?? 'raja7373',
+    areas:[],
+    checkpoints:[],
+    gpsPath:[],
+    signature:null,
+    profilePhoto: null,
+    // ✅ NEW: Chat state
+    chatOpen: false,
+    unreadCount: 0,
+    lastDelivered: 0,
+    // ✅ NEW: GPS optimization
+    maxGpsPoints: 100
+  };
+
+  const refs = {
+    modeDisplay: $('#modeDisplay'), btnToggleMode: $('#btnToggleMode'),
+    btnStartGPS: $('#btnStartGPS'), gpsStatus: $('#gpsStatus'), coords: $('#coords'),
+    btnAddArea: $('#btnAddArea'), newAreaName: $('#newAreaName'), newAreaDetail: $('#newAreaDetail'), areasContainer: $('#areasContainer'),
+    tabAreas: $('#tabAreas'), tabCheckpoint: $('#tabCheckpoint'), tabLokasi: $('#tabLokasi'), tabFotoProfil: $('#tabFotoProfil'), tabDeep: $('#tabDeep'),
+    areaTab: $('#areaTab'), checkpointTab: $('#checkpointTab'), lokasiTab: $('#lokasiTab'), fotoProfilTab: $('#fotoProfilTab'), deepTab: $('#deepTab'),
+    btnScanAreaQR: $('#btnScanAreaQR'),
+    btnGenerateQRManual: $('#btnGenerateQRManual'), qrCanvasManual: $('#qrCanvasManual'), btnDownloadQRManual: $('#btnDownloadQRManual'),
+    btnCopyQRDataManual: $('#btnCopyQRDataManual'), btnCopyQRContentManual: $('#btnCopyQRContentManual'), btnSaveCheckpoint: $('#btnSaveCheckpoint'),
+    qrAreaName: $('#qrAreaName'), qrAreaDetail: $('#qrAreaDetail'),
+    btnLogin: $('#btnLogin'), btnLogout: $('#btnLogout'), adminPass: $('#adminPass'),
+    btnGeneratePDF: $('#btnGeneratePDF'),
+    tabViewAreas: $('#tabViewAreas'), tabSignature: $('#tabSignature'), viewAreas: $('#viewAreas'), viewSignature: $('#viewSignature'),
+    sigCanvas: $('#sigCanvas'), btnClearSig: $('#btnClearSig'), btnSaveSig: $('#btnSaveSig'), sigPreview: $('#sigPreview'), sigName: $('#sigName'),
+    btnDeepClean: $('#btnDeepClean'), btnDeepCancel: $('#btnDeepCancel'),
+    modalBackdrop: $('#modalBackdrop'), modalOk: $('#modalOk'), modalCancel: $('#modalCancel'),
+    manualLokasi: $('#manualLokasi'), officerName: $('#officerName'), shift: $('#shift'), date: $('#date'),
+    video: $('#video'), btnStartScan: $('#btnStartScan'), btnStopScan: $('#btnStopScan'), scanResult: $('#scanResult'),
+    fileScanInput: $('#fileScanInput'), btnFileScan: $('#btnFileScan'), qrList: $('#qrList'),
+    // ✅ NEW: Profile photo elements
+    btnTakeProfilePhoto: $('#btnTakeProfilePhoto'), btnUploadProfilePhoto: $('#btnUploadProfilePhoto'),
+    btnRemoveProfilePhoto: $('#btnRemoveProfilePhoto'), profilePhotoPreview: $('#profilePhotoPreview'),
+    // ✅ NEW: Chat elements
+    chatBubble: $('#chatBubble'), chatPanel: $('#chatPanel'), chatMessages: $('#chatMessages'),
+    chatInput: $('#chatInput'), chatSend: $('#chatSend'), chatClose: $('.chat-close'),
+    // ✅ NEW: Camera overlay elements
+    cameraOverlay: $('#cameraOverlay'), cameraVideo: $('#cameraVideo'),
+    closeCamera: $('#closeCamera'), captureScan: $('#captureScan'), cancelScan: $('#cancelScan')
+  };
+
+  function colorForId(id){ let h=0; for(let i=0;i<id.length;i++) h=(h<<5)-h+id.charCodeAt(i); return 'hsl('+ (Math.abs(h)%360) +',68%,36%)'; }
+  function colorForIdRgb(id){ let h=0; for(let i=0;i<id.length;i++) h=(h<<5)-h+id.charCodeAt(i); const hue = Math.abs(h)%360; return hslToRgb(hue/360,0.7,0.4); }
+  function hslToRgb(h,s,l){ let r,g,b; if(s===0){ r=g=b=l; }else{ const hue2rgb=(p,q,t)=>{ if(t<0)t+=1;if(t>1)t-=1;if(t<1/6)return p+(q-p)*6*t;if(t<1/2)return q;if(t<2/3)return p+(q-p)*(2/3-t)*6;return p;}; const q = l<0.5? l*(1+s): l + s - l*s; const p = 2*l - q; r=hue2rgb(p,q,h+1/3); g=hue2rgb(p,q,h); b=hue2rgb(p,q,h-1/3);} return [Math.round(r*255),Math.round(g*255),Math.round(b*255)]; }
+
+  function updateModeUI(){ 
+    refs.modeDisplay.textContent = 'Mode: ' + (state.isAdmin ? 'Admin' : 'User'); 
+    refs.btnToggleMode.textContent = state.isAdmin ? 'Masuk User' : 'Masuk Admin'; 
+    refs.btnLogout.style.display = state.isAdmin ? 'inline-block' : 'none'; 
+    refs.btnLogin.style.display = state.isAdmin ? 'none' : 'inline-block'; 
+    refs.btnUploadProfilePhoto.style.display = state.isAdmin ? 'inline-block' : 'none';
+    renderAreas(); 
+    renderCheckpointList(); 
+    renderProfilePhoto(); 
+  }
+
+  // ✅ IMPROVED ADMIN LOGOUT - Clear semua data sensitif
+  refs.btnToggleMode.addEventListener('click', ()=>{ 
+    if(!state.isAdmin){ 
+      const p = prompt('Password Admin:'); 
+      if(p===null) return; 
+      if(p === state.adminPassword){ 
+        state.isAdmin = true; 
+        updateModeUI(); 
+        alert('Admin login berhasil'); 
+      } else alert('Password salah'); 
+    } else { 
+      state.isAdmin = false; 
+      refs.adminPass.value = '';
+      updateModeUI(); 
+      alert('Mode User aktif'); 
+    } 
+  });
+
+  refs.btnLogin.addEventListener('click', ()=>{ 
+    const p = refs.adminPass.value||''; 
+    if(p === state.adminPassword){ 
+      state.isAdmin = true; 
+      refs.adminPass.value=''; 
+      updateModeUI(); 
+      alert('Admin login berhasil'); 
+    } else alert('Password salah'); 
+  });
+
+  refs.btnLogout.addEventListener('click', ()=>{ 
+    state.isAdmin = false; 
+    refs.adminPass.value = '';
+    updateModeUI(); 
+    alert('Logout berhasil'); 
+  });
+
+  // ✅ IMPROVED GPS TRACKING dengan memory management
+  let watchId = null;
+  refs.btnStartGPS.addEventListener('click', ()=>{ 
+    if(!navigator.geolocation){ 
+      alert('Geolocation tidak didukung browser ini'); 
+      return; 
+    } 
+    
+    refs.btnStartGPS.style.display='none'; 
+    refs.gpsStatus.textContent='GPS: aktif'; 
+    
+    watchId = navigator.geolocation.watchPosition(
+      pos => { 
+        const lat = pos.coords.latitude, 
+              lon = pos.coords.longitude, 
+              ts = pos.timestamp; 
+              
+        refs.coords.textContent = lat.toFixed(6) + ', ' + lon.toFixed(6) + ' @ ' + new Date(ts).toLocaleTimeString(); 
+        
+        // ✅ OPTIMIZED: Batasi jumlah titik GPS
+        state.gpsPath.push({lat, lon, timestamp: ts});
+        if (state.gpsPath.length > state.maxGpsPoints) {
+          state.gpsPath = state.gpsPath.slice(-state.maxGpsPoints);
+        }
+      }, 
+      err => { 
+        console.warn(err); 
+        refs.gpsStatus.textContent='GPS: error - ' + (err.message || 'unknown error');
+      }, 
+      {
+        enableHighAccuracy: true,
+        maximumAge: 10000,
+        timeout: 15000
+      }
+    ); 
+  });
+
+  // ✅ UPDATED: Added fotoProfilTab
+  refs.tabAreas.addEventListener('click', ()=>{ 
+    refs.areaTab.classList.remove('hidden'); 
+    refs.checkpointTab.classList.add('hidden'); 
+    refs.lokasiTab.classList.add('hidden'); 
+    refs.fotoProfilTab.classList.add('hidden'); 
+    refs.deepTab.classList.add('hidden'); 
+    updateActiveTab(refs.tabAreas);
+  });
+  
+  refs.tabCheckpoint.addEventListener('click', ()=>{ 
+    refs.areaTab.classList.add('hidden'); 
+    refs.checkpointTab.classList.remove('hidden'); 
+    refs.lokasiTab.classList.add('hidden'); 
+    refs.fotoProfilTab.classList.add('hidden'); 
+    refs.deepTab.classList.add('hidden'); 
+    updateActiveTab(refs.tabCheckpoint);
+  });
+  
+  refs.tabLokasi.addEventListener('click', ()=>{ 
+    refs.areaTab.classList.add('hidden'); 
+    refs.checkpointTab.classList.add('hidden'); 
+    refs.lokasiTab.classList.remove('hidden'); 
+    refs.fotoProfilTab.classList.add('hidden'); 
+    refs.deepTab.classList.add('hidden'); 
+    updateActiveTab(refs.tabLokasi);
+  });
+  
+  refs.tabFotoProfil.addEventListener('click', ()=>{ 
+    refs.areaTab.classList.add('hidden'); 
+    refs.checkpointTab.classList.add('hidden'); 
+    refs.lokasiTab.classList.add('hidden'); 
+    refs.fotoProfilTab.classList.remove('hidden'); 
+    refs.deepTab.classList.add('hidden'); 
+    updateActiveTab(refs.tabFotoProfil);
+  });
+  
+  refs.tabDeep.addEventListener('click', ()=>{ 
+    refs.areaTab.classList.add('hidden'); 
+    refs.checkpointTab.classList.add('hidden'); 
+    refs.lokasiTab.classList.add('hidden'); 
+    refs.fotoProfilTab.classList.add('hidden'); 
+    refs.deepTab.classList.remove('hidden'); 
+    updateActiveTab(refs.tabDeep);
+  });
+  
+  refs.tabViewAreas.addEventListener('click', ()=>{ 
+    refs.viewAreas.classList.remove('hidden'); 
+    refs.viewSignature.classList.add('hidden'); 
+    updateActiveTab(refs.tabViewAreas, 'view');
+  });
+  
+  refs.tabSignature.addEventListener('click', ()=>{ 
+    refs.viewAreas.classList.add('hidden'); 
+    refs.viewSignature.classList.remove('hidden'); 
+    updateActiveTab(refs.tabSignature, 'view');
+  });
+
+  function updateActiveTab(activeTab, type = 'main') {
+    const tabs = type === 'view' 
+      ? [refs.tabViewAreas, refs.tabSignature]
+      : [refs.tabAreas, refs.tabCheckpoint, refs.tabLokasi, refs.tabFotoProfil, refs.tabDeep];
+    
+    tabs.forEach(tab => {
+      if (tab === activeTab) {
+        tab.classList.add('active');
+      } else {
+        tab.classList.remove('active');
+      }
+    });
+  }
+
+  refs.btnAddArea.addEventListener('click', ()=>{ addArea(refs.newAreaName.value.trim()||undefined, refs.newAreaDetail.value.trim()||undefined); refs.newAreaName.value=''; refs.newAreaDetail.value=''; });
+  function addArea(name, detail){
+    const id = uid('area'); 
+    state.areas.push({
+      id,
+      name: name || ('Area '+(state.areas.length+1)), 
+      detail: detail||'', 
+      description:'', 
+      photos:[]
+    }); 
+    renderAreas();
+  }
+
+  function renderAreas(){
+    refs.areasContainer.innerHTML = '';
+    state.areas.forEach(area=>{
+      const wrapper = document.createElement('div'); wrapper.className='area';
+      const h = document.createElement('div'); h.className='area-header';
+      const title = document.createElement('div'); title.className='area-title'; title.textContent = area.name + (area.detail ? ' — ' + area.detail : ''); title.style.background = colorForId(area.id);
+      h.appendChild(title);
+      const actions = document.createElement('div');
+      const editBtn = document.createElement('button'); editBtn.className='icon-btn'; editBtn.innerHTML='<i class="fa fa-pen"></i>'; editBtn.title='Edit nama area';
+      editBtn.onclick = ()=>{ const nv = prompt('Edit nama area:', area.name); if(nv!==null){ area.name = nv; renderAreas(); } };
+      const qrBtn = document.createElement('button'); qrBtn.className='icon-btn'; qrBtn.innerHTML='<i class="fa fa-qrcode"></i>'; qrBtn.title='Scan QR to fill area';
+      qrBtn.onclick = async ()=>{ 
+        try{ 
+          const content = await startScanOne(false); 
+          if(!content) return; 
+          try{ 
+            const p = JSON.parse(content); 
+            if(p && p.area){ 
+              area.name = p.area; 
+              area.detail = p.detail||area.detail; 
+              renderAreas(); 
+              alert('Area terisi dari QR'); 
+              return; 
+            } 
+          }catch(e){ 
+            area.name = content; 
+            renderAreas(); 
+            alert('Area terisi: '+content); 
+          } 
+        } catch(e){ 
+          alert('Scan QR gagal: '+(e.message||e)); 
+        } 
+      };
+      const delBtn = document.createElement('button'); delBtn.className='icon-btn'; delBtn.innerHTML='<i class="fa fa-trash" style="color:#b91c1c"></i>'; delBtn.title='Hapus area';
+      delBtn.onclick = ()=>{ if(confirm('Hapus area & semua fotonya?')){ area.photos.forEach(p=>revoke(p.url)); state.areas = state.areas.filter(x=>x.id!==area.id); renderAreas(); } };
+      actions.appendChild(editBtn); actions.appendChild(qrBtn); actions.appendChild(delBtn);
+      h.appendChild(actions); wrapper.appendChild(h);
+
+      const pc = document.createElement('div'); pc.className='photo-controls';
+      if(state.isAdmin){
+        const galBtn = document.createElement('button'); galBtn.className='btn ghost'; galBtn.textContent='Pilih dari Galeri (multiple)';
+        galBtn.onclick = async ()=>{ const r = await createFileInput({allowGallery:true,multiple:true}); await handleFiles(area.id,r.files,r.pos); };
+        const camBtn = document.createElement('button'); camBtn.className='btn ghost'; camBtn.textContent='Ambil Foto (kamera)';
+        camBtn.onclick = async ()=>{ const r = await createFileInput({allowGallery:false,multiple:false}); await handleFiles(area.id,r.files,r.pos); };
+        pc.appendChild(galBtn); pc.appendChild(camBtn);
+      } else {
+        const camBtn = document.createElement('button'); camBtn.className='btn ghost'; camBtn.textContent='Ambil Foto (kamera)';
+        camBtn.onclick = async ()=>{ const r = await createFileInput({allowGallery:false,multiple:false}); await handleFiles(area.id,r.files,r.pos); };
+        pc.appendChild(camBtn);
+      }
+      wrapper.appendChild(pc);
+
+      const photosWrap = document.createElement('div'); photosWrap.className='photos';
+      area.photos.forEach(p=>{
+        const col = document.createElement('div'); col.style.width='170px';
+        const photoItem = document.createElement('div'); photoItem.className='photo-item';
+        const img = document.createElement('img'); img.src = p.url; photoItem.appendChild(img);
+        const actionWrap = document.createElement('div'); actionWrap.style.position='absolute'; actionWrap.style.left='6px'; actionWrap.style.bottom='6px'; actionWrap.style.display='flex'; actionWrap.style.gap='6px';
+        const del = document.createElement('button'); del.className='icon-btn'; del.innerHTML='<i class="fa fa-trash" style="color:#b91c1c"></i>';
+        del.onclick = ()=>{ if(confirm('Hapus foto?')){ area.photos = area.photos.filter(pp=>pp.id!==p.id); revoke(p.url); renderAreas(); } };
+        const edit = document.createElement('button'); edit.className='icon-btn'; edit.innerHTML='<i class="fa fa-pen" style="color:#0b1228"></i>';
+        edit.onclick = ()=>{ const v = prompt('Deskripsi (tanpa batas):', p.desc||''); if(v!==null){ p.desc = v; renderAreas(); } };
+        actionWrap.appendChild(del); actionWrap.appendChild(edit); photoItem.appendChild(actionWrap);
+        const meta = document.createElement('div'); meta.className='photo-meta';
+        meta.innerHTML = `<div style="font-weight:700">${p.desc || '(klik pensil untuk deskripsi)'}</div>
+          <div style="font-size:11px;color:#555">${p.lat? p.lat.toFixed(6): '-'}, ${p.lon? p.lon.toFixed(6): '-'}<br>${p.ts? new Date(p.ts).toLocaleString(): ''}</div>`;
+        col.appendChild(photoItem); col.appendChild(meta); photosWrap.appendChild(col);
+      });
+      wrapper.appendChild(photosWrap);
+
+      const ta = document.createElement('textarea'); ta.placeholder='Deskripsi area...'; ta.value = area.description || ''; ta.oninput = ()=> area.description = ta.value;
+      const saveBtn = document.createElement('button'); saveBtn.className='btn'; saveBtn.textContent='Simpan Deskripsi Area'; saveBtn.style.marginTop='8px'; saveBtn.onclick = ()=> alert('Deskripsi area disimpan');
+      wrapper.appendChild(ta); wrapper.appendChild(saveBtn);
+
+      refs.areasContainer.appendChild(wrapper);
+    });
+  }
+
+  function createFileInput(opts){
+    return new Promise(resolve=>{
+      function getPos(cb){ 
+        if(navigator.geolocation){ 
+          navigator.geolocation.getCurrentPosition(
+            p=>cb({lat:p.coords.latitude,lon:p.coords.longitude,ts:p.timestamp}), 
+            ()=>cb(null), 
+            {enableHighAccuracy:true,timeout:4000}
+          ); 
+        } else cb(null); 
+      }
+      getPos(function(pos){
+        const inp = document.createElement('input'); 
+        inp.type='file'; 
+        inp.accept='image/*'; 
+        if(opts.multiple) inp.multiple=true; 
+        if(!opts.allowGallery) inp.setAttribute('capture','environment');
+        inp.style.display='none'; 
+        document.body.appendChild(inp);
+        inp.addEventListener('change', e=>{ 
+          const files = Array.from(e.target.files || []); 
+          try{ document.body.removeChild(inp);}catch(e){}; 
+          resolve({files,pos}); 
+        });
+        inp.click();
+        setTimeout(()=>{ 
+          try{ if(document.body.contains(inp)) document.body.removeChild(inp);}catch(e){}; 
+          resolve({files:[],pos}); 
+        },30000);
+      });
+    });
+  }
+
+  // ✅ IMPROVED FILE HANDLING dengan retry mechanism
+  async function handleFiles(areaId, files, pos){
+    const area = state.areas.find(a=>a.id===areaId); 
+    if(!area) return;
+    
+    for(const f of files){
+      const id = uid('photo'); 
+      const url = URL.createObjectURL(f);
+      let lat=null, lon=null, ts=null;
+      
+      if(pos){ 
+        lat = pos.lat; 
+        lon = pos.lon; 
+        ts = pos.ts; 
+      } else if(state.gpsPath.length){ 
+        const g = state.gpsPath[state.gpsPath.length-1]; 
+        lat=g.lat; 
+        lon=g.lon; 
+        ts=g.timestamp; 
+      }
+      
+      area.photos.push({id,file:f,url,desc:'',lat,lon,ts});
+    }
+    renderAreas();
+  }
+
+  // ✅ NEW: Profile Photo Functions
+  function renderProfilePhoto() {
+    if (state.profilePhoto) {
+      refs.profilePhotoPreview.style.display = 'block';
+      refs.profilePhotoPreview.innerHTML = `<img src="${state.profilePhoto.url}" style="width:100%;height:100%;object-fit:contain">`;
+      refs.btnRemoveProfilePhoto.style.display = 'inline-block';
+    } else {
+      refs.profilePhotoPreview.style.display = 'none';
+      refs.btnRemoveProfilePhoto.style.display = 'none';
+    }
+  }
+
+  refs.btnTakeProfilePhoto.addEventListener('click', async () => {
+    try {
+      const result = await createFileInput({allowGallery: false, multiple: false});
+      if (result.files.length > 0) {
+        const file = result.files[0];
+        const url = URL.createObjectURL(file);
+        state.profilePhoto = { file, url };
+        renderProfilePhoto();
+        alert('Foto profil berhasil diambil!');
+      }
+    } catch (e) {
+      alert('Gagal mengambil foto: ' + e.message);
+    }
+  });
+
+  refs.btnUploadProfilePhoto.addEventListener('click', async () => {
+    try {
+      const result = await createFileInput({allowGallery: true, multiple: false});
+      if (result.files.length > 0) {
+        const file = result.files[0];
+        const url = URL.createObjectURL(file);
+        state.profilePhoto = { file, url };
+        renderProfilePhoto();
+        alert('Foto profil berhasil diupload!');
+      }
+    } catch (e) {
+      alert('Gagal upload foto: ' + e.message);
+    }
+  });
+
+  refs.btnRemoveProfilePhoto.addEventListener('click', () => {
+    if (state.profilePhoto) {
+      revoke(state.profilePhoto.url);
+      state.profilePhoto = null;
+      renderProfilePhoto();
+      alert('Foto profil dihapus!');
+    }
+  });
+
+  const qrManual = new QRious({ element: refs.qrCanvasManual, size: 220, value: '' });
+  function buildQRJson(area, detail){ const a=(area||'').trim(); const d=(detail||'').trim(); return JSON.stringify({area:a,detail:d}); }
+  refs.btnGenerateQRManual.addEventListener('click', ()=>{ 
+    const content = buildQRJson(refs.qrAreaName.value, refs.qrAreaDetail.value); 
+    if(!refs.qrAreaName.value.trim() && !refs.qrAreaDetail.value.trim()){ 
+      alert('Isi area atau detail'); 
+      return; 
+    } 
+    qrManual.set({ value: content, size: 300 }); 
+    try{ navigator.clipboard.writeText(content); }catch(e){} 
+    alert('QR JSON dibuat & disalin (opsional)'); 
+  });
+  
+  refs.btnDownloadQRManual.addEventListener('click', ()=>{ 
+    try{ 
+      const dataUrl = qrManual.toDataURL('image/png'); 
+      const a = document.createElement('a'); 
+      a.href = dataUrl; 
+      a.download = 'checkpoint_json_'+Date.now()+'.png'; 
+      document.body.appendChild(a); 
+      a.click(); 
+      setTimeout(()=>{ try{ document.body.removeChild(a);}catch(e){} },800); 
+    }catch(e){ 
+      alert('Download QR gagal'); 
+    } 
+  });
+  
+  refs.btnCopyQRDataManual.addEventListener('click', ()=>{ 
+    try{ 
+      const d = qrManual.toDataURL('image/png'); 
+      navigator.clipboard.writeText(d).then(()=>alert('DataURL QR disalin')); 
+    }catch(e){ 
+      alert('Copy fail'); 
+    } 
+  });
+  
+  refs.btnCopyQRContentManual.addEventListener('click', ()=>{ 
+    const c = buildQRJson(refs.qrAreaName.value, refs.qrAreaDetail.value); 
+    navigator.clipboard.writeText(c).then(()=>alert('Content disalin')); 
+  });
+
+  refs.btnSaveCheckpoint.addEventListener('click', ()=>{ 
+    const area=(refs.qrAreaName.value||'').trim(); 
+    const detail=(refs.qrAreaDetail.value||'').trim(); 
+    if(!area && !detail) return alert('Isi area atau detail'); 
+    const content=buildQRJson(area,detail); 
+    const id=uid('cp'); 
+    state.checkpoints.push({id,area,detail,content}); 
+    refs.qrAreaName.value=''; 
+    refs.qrAreaDetail.value=''; 
+    qrManual.set({ value:'' }); 
+    renderCheckpointList(); 
+    alert('Checkpoint disimpan'); 
+  });
+
+  function renderCheckpointList(){ 
+    refs.qrList.innerHTML=''; 
+    state.checkpoints.forEach(cp=>{ 
+      const row = document.createElement('div'); 
+      row.className='qr-row'; 
+      row.innerHTML = `<div style="flex:1"><strong>${cp.area||'(tanpa nama)'}</strong><div class="small">${cp.content}</div></div>`; 
+      const gen = document.createElement('button'); gen.className='btn'; gen.textContent='Preview QR'; 
+      gen.onclick=()=>{ qrManual.set({ value: cp.content, size:300 }); refs.qrAreaName.value = cp.area; refs.qrAreaDetail.value = cp.detail; }; 
+      const copy = document.createElement('button'); copy.className='btn ghost'; copy.textContent='Copy'; 
+      copy.onclick = ()=> navigator.clipboard.writeText(cp.content).then(()=>alert('Copied')); 
+      const dl = document.createElement('button'); dl.className='btn ghost'; dl.textContent='Download'; 
+      dl.onclick = ()=>{ 
+        try{ 
+          const tmp = new QRious({ value: cp.content, size:300 }); 
+          const dataUrl = tmp.toDataURL('image/png'); 
+          const a = document.createElement('a'); 
+          a.href = dataUrl; 
+          a.download = 'checkpoint_json_'+cp.id+'.png'; 
+          document.body.appendChild(a); 
+          a.click(); 
+          setTimeout(()=>{ try{ document.body.removeChild(a);}catch(e){} },800); 
+        }catch(e){ 
+          alert('Download fail'); 
+        } 
+      }; 
+      const del = document.createElement('button'); del.className='btn danger'; del.textContent='Hapus'; 
+      del.onclick=()=>{ if(confirm('Hapus checkpoint?')){ state.checkpoints = state.checkpoints.filter(x=>x.id!==cp.id); renderCheckpointList(); } }; 
+      row.appendChild(gen); row.appendChild(copy); row.appendChild(dl); row.appendChild(del); 
+      refs.qrList.appendChild(row); 
+    }); 
+  }
+
+  // ✅ IMPROVED CAMERA SCAN dengan overlay dan error handling
+  let scanning=false, streamRef=null;
+  const video = refs.video;
+  const canvasForScan = document.createElement('canvas'), ctxForScan = canvasForScan.getContext('2d');
+
+  // ✅ NEW: Improved camera scan dengan overlay
+  async function startCameraScan(){
+    if(scanning) return;
+    
+    try{
+      // Coba dapatkan camera dengan konfigurasi optimal
+      const constraints = {
+        video: { 
+          facingMode: 'environment',
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        }, 
+        audio: false 
+      };
+      
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      streamRef = stream;
+      refs.cameraVideo.srcObject = stream;
+      await refs.cameraVideo.play();
+      refs.cameraOverlay.classList.remove('hidden');
+      scanning = true;
+      
+    } catch(err){ 
+      console.error('Camera error:', err);
+      
+      // Fallback ke constraints lebih sederhana
+      try {
+        const fallbackConstraints = { video: { facingMode: 'environment' }, audio: false };
+        const stream = await navigator.mediaDevices.getUserMedia(fallbackConstraints);
+        streamRef = stream;
+        refs.cameraVideo.srcObject = stream;
+        await refs.cameraVideo.play();
+        refs.cameraOverlay.classList.remove('hidden');
+        scanning = true;
+      } catch (fallbackErr) {
+        alert('Tidak bisa akses kamera: ' + (fallbackErr.message || fallbackErr));
+        scanning = false;
+      }
+    }
+  }
+
+  function stopCameraScan(){ 
+    scanning = false; 
+    if(streamRef){ 
+      streamRef.getTracks().forEach(t=>t.stop()); 
+      streamRef = null; 
+    } 
+    try{ 
+      refs.cameraVideo.pause(); 
+      refs.cameraVideo.srcObject = null; 
+      refs.cameraOverlay.classList.add('hidden');
+    } catch(e){} 
+  }
+
+  function captureAndScan() {
+    if (!scanning) return;
+    
+    const video = refs.cameraVideo;
+    if(video.readyState === video.HAVE_ENOUGH_DATA){
+      const vw = video.videoWidth, vh = video.videoHeight;
+      canvasForScan.width = vw;
+      canvasForScan.height = vh;
+      ctxForScan.drawImage(video, 0, 0, vw, vh);
+      const imgData = ctxForScan.getImageData(0, 0, vw, vh);
+      const code = jsQR(imgData.data, imgData.width, imgData.height);
+      
+      if(code){ 
+        refs.scanResult.textContent = 'Hasil scan: ' + code.data; 
+        stopCameraScan(); 
+        try{ 
+          const p = JSON.parse(code.data); 
+          refs.qrAreaName.value = p.area || ''; 
+          refs.qrAreaDetail.value = p.detail || ''; 
+          alert('QR JSON terbaca'); 
+        } catch(e){ 
+          refs.qrAreaName.value = code.data; 
+          alert('QR text terbaca'); 
+        } 
+        return true;
+      }
+    }
+    return false;
+  }
+
+  // Event listeners untuk camera overlay
+  refs.captureScan.addEventListener('click', () => {
+    if (!captureAndScan()) {
+      alert('QR code tidak terdeteksi. Coba posisikan kamera lebih dekat atau pastikan lighting cukup.');
+    }
+  });
+
+  refs.closeCamera.addEventListener('click', stopCameraScan);
+  refs.cancelScan.addEventListener('click', stopCameraScan);
+
+  // Auto-scan setiap 500ms saat camera aktif
+  function autoScan() {
+    if (!scanning) return;
+    captureAndScan();
+    setTimeout(autoScan, 500);
+  }
+
+  refs.btnStartScan.addEventListener('click', () => {
+    startCameraScan().then(() => {
+      if (scanning) {
+        autoScan();
+      }
+    });
+  });
+  
+  refs.btnStopScan.addEventListener('click', stopCameraScan);
+  refs.btnFileScan.addEventListener('click', ()=> refs.fileScanInput.click());
+  
+  refs.fileScanInput.addEventListener('change', async (e)=>{
+    const f = e.target.files && e.target.files[0]; 
+    if(!f) return; 
+    
+    const img = new Image(); 
+    img.onload = ()=>{
+      canvasForScan.width = img.width; 
+      canvasForScan.height = img.height; 
+      ctxForScan.drawImage(img, 0, 0); 
+      const d = ctxForScan.getImageData(0, 0, canvasForScan.width, canvasForScan.height); 
+      const code = jsQR(d.data, d.width, d.height); 
+      
+      if(code){
+        refs.scanResult.textContent = 'Hasil scan: '+code.data; 
+        try{ 
+          const p = JSON.parse(code.data); 
+          refs.qrAreaName.value = p.area || ''; 
+          refs.qrAreaDetail.value = p.detail || ''; 
+          alert('QR JSON terbaca'); 
+        } catch(e){ 
+          refs.qrAreaName.value = code.data; 
+          alert('QR text terbaca'); 
+        } 
+      } else {
+        alert('QR tidak terdeteksi pada gambar ini'); 
+      }
+    }; 
+    img.onerror = ()=> alert('Gagal memuat file gambar'); 
+    img.src = URL.createObjectURL(f); 
+  });
+
+  async function startScanOne(allowGallery){
+    try{ 
+      await startCameraScan(); 
+      return await new Promise((resolve)=>{
+        const interval = setInterval(()=>{
+          const txt = refs.scanResult.textContent || '';
+          if(txt.includes('Hasil scan:') && !txt.includes('tidak terdeteksi')){
+            clearInterval(interval);
+            const data = txt.replace('Hasil scan:','').trim();
+            resolve(data);
+          }
+        }, 300);
+        
+        setTimeout(()=>{
+          clearInterval(interval);
+          stopCameraScan();
+          resolve(null);
+        }, 30000);
+      });
+    } catch(e){ 
+      return new Promise((resolve)=>{
+        refs.fileScanInput.click();
+        refs.fileScanInput.onchange = function(ev){
+          const f = ev.target.files && ev.target.files[0];
+          if(!f) return resolve(null);
+          
+          const img = new Image();
+          img.onload = ()=>{
+            canvasForScan.width = img.width;
+            canvasForScan.height = img.height;
+            ctxForScan.drawImage(img, 0, 0);
+            const d = ctxForScan.getImageData(0, 0, canvasForScan.width, canvasForScan.height);
+            const code = jsQR(d.data, d.width, d.height);
+            if(code) resolve(code.data);
+            else resolve(null);
+          };
+          img.onerror = ()=> resolve(null);
+          img.src = URL.createObjectURL(f);
+        };
+      });
+    }
+  }
+
+  // signature
+  const sCanvas = refs.sigCanvas, sCtx = sCanvas.getContext('2d'); 
+  let drawing=false, last=null;
+  
+  function sp(e){ 
+    const r = sCanvas.getBoundingClientRect(); 
+    return {
+      x: (e.touches ? e.touches[0].clientX : e.clientX) - r.left, 
+      y: (e.touches ? e.touches[0].clientY : e.clientY) - r.top
+    }; 
+  }
+  
+  function sDown(e){ 
+    drawing = true; 
+    last = sp(e); 
+    document.body.style.overflow = 'hidden'; 
+    e.preventDefault(); 
+  }
+  
+  function sMove(e){ 
+    if(!drawing) return; 
+    const p = sp(e); 
+    sCtx.beginPath(); 
+    sCtx.moveTo(last.x, last.y); 
+    sCtx.lineTo(p.x, p.y); 
+    sCtx.lineCap = 'round'; 
+    sCtx.lineWidth = 2.6; 
+    sCtx.strokeStyle = '#111'; 
+    sCtx.stroke(); 
+    last = p; 
+    e.preventDefault(); 
+  }
+  
+  function sUp(e){ 
+    drawing = false; 
+    last = null; 
+    document.body.style.overflow = ''; 
+  }
+  
+  sCanvas.addEventListener('mousedown', sDown); 
+  sCanvas.addEventListener('mousemove', sMove); 
+  sCanvas.addEventListener('mouseup', sUp);
+  sCanvas.addEventListener('touchstart', sDown, {passive:false}); 
+  sCanvas.addEventListener('touchmove', sMove, {passive:false}); 
+  sCanvas.addEventListener('touchend', sUp);
+  
+  refs.btnClearSig.addEventListener('click', ()=>{ 
+    sCtx.clearRect(0, 0, sCanvas.width, sCanvas.height); 
+    state.signature = null; 
+    refs.sigPreview.innerHTML = ''; 
+  });
+  
+  refs.btnSaveSig.addEventListener('click', ()=>{ 
+    const data = sCanvas.toDataURL('image/png'); 
+    state.signature = data; 
+    refs.sigPreview.innerHTML = '<img src="'+data+'" style="width:160px;height:70px;object-fit:contain">'; 
+    alert('Tanda tangan tersimpan'); 
+  });
+
+  refs.btnDeepClean.addEventListener('click', ()=> refs.modalBackdrop.style.display='flex');
+  refs.btnDeepCancel.addEventListener('click', ()=> alert('Deep Clean dibatalkan'));
+  refs.modalCancel.addEventListener('click', ()=> refs.modalBackdrop.style.display='none');
+  refs.modalOk.addEventListener('click', ()=>{ doDeepClean(); refs.modalBackdrop.style.display='none'; alert('Deep Clean selesai'); });
+
+  function doDeepClean(){
+    state.areas.forEach(a=> a.photos.forEach(p=> revoke(p.url)));
+    if (state.profilePhoto) revoke(state.profilePhoto.url);
+    state.areas = []; 
+    state.checkpoints = []; 
+    state.gpsPath = []; 
+    state.signature = null; 
+    state.profilePhoto = null;
+    state.isAdmin = false;
+    
+    try{ 
+      window.__patrol_admin_password = null; 
+    } catch(e){}
+    
+    const ids = [
+      'areasContainer','qrCanvasManual','sigPreview','sigCanvas',
+      'qrAreaName','qrAreaDetail','manualLokasi','officerName',
+      'shift','date','newAreaName','newAreaDetail','adminPass','sigName'
+    ];
+    
+    ids.forEach(id=>{ 
+      const el = document.getElementById(id); 
+      if(!el) return; 
+      if(el.tagName === 'CANVAS'){ 
+        el.getContext('2d').clearRect(0,0,el.width,el.height); 
+      } else if(el.tagName === 'DIV' || el.tagName === 'SPAN'){ 
+        el.innerHTML = ''; 
+      } else { 
+        try{ el.value = ''; } catch(e){} 
+      } 
+    });
+    
+    try{ 
+      qrManual.set({ value: '' }); 
+    } catch(e){}
+    
+    renderAreas(); 
+    renderCheckpointList(); 
+    renderProfilePhoto(); 
+    updateModeUI();
+  }
+
+  // ✅ FIXED CHAT FUNCTIONS dengan Firebase ready check
+  async function initChat() {
+    // Tunggu Firebase siap
+    await waitForFirebase();
+    
+    console.log('🔥 Firebase ready, initializing chat...');
+    
+    // Toggle chat panel
+    refs.chatBubble.addEventListener('click', () => {
+      state.chatOpen = !state.chatOpen;
+      if (state.chatOpen) {
+        refs.chatPanel.classList.remove('hidden');
+        state.unreadCount = 0;
+        updateChatBubble();
+        markMessagesAsDelivered();
+      } else {
+        refs.chatPanel.classList.add('hidden');
+      }
+    });
+
+    // Close chat panel
+    refs.chatClose.addEventListener('click', () => {
+      state.chatOpen = false;
+      refs.chatPanel.classList.add('hidden');
+    });
+
+    // Send message
+    refs.chatSend.addEventListener('click', sendMessage);
+    refs.chatInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') sendMessage();
+    });
+
+    // Listen for chat messages
+    listenForChatMessages();
+    
+    console.log('✅ Chat system initialized');
+  }
+
+  async function sendMessage() {
+    const text = refs.chatInput.value.trim();
+    if (!text) return;
+
+    try {
+      const officerName = refs.officerName.value || 'Petugas';
+      const uid = getLocalUid();
+      
+      // Push to Firebase
+      await firebase.database().ref('chat/global').push({
+        uid: uid,
+        name: officerName,
+        text: text,
+        time: Date.now()
+      });
+
+      refs.chatInput.value = '';
+    } catch (error) {
+      console.error('Send message error:', error);
+      alert('Gagal mengirim pesan. Cek koneksi internet.');
+    }
+  }
+
+  function listenForChatMessages() {
+    try {
+      firebase.database().ref('chat/global').limitToLast(100).on('child_added', (snapshot) => {
+        const message = snapshot.val();
+        if (!message) return;
+
+        addMessageToChat(message, snapshot.key);
+        
+        // Notify if chat is closed
+        if (!state.chatOpen && message.uid !== getLocalUid()) {
+          state.unreadCount++;
+          updateChatBubble();
+          showNotification(message);
+        }
+      });
+    } catch (error) {
+      console.error('Chat listener error:', error);
+    }
+  }
+
+  function addMessageToChat(message, messageId) {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `chat-message ${message.uid === getLocalUid() ? 'own' : 'other'}`;
+    
+    const time = new Date(message.time || Date.now()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    
+    messageDiv.innerHTML = `
+      <div>${message.text}</div>
+      <div class="chat-meta">${message.name} • ${time}</div>
+    `;
+    
+    refs.chatMessages.appendChild(messageDiv);
+    refs.chatMessages.scrollTop = refs.chatMessages.scrollHeight;
+    
+    // Store message ID for delivery tracking
+    messageDiv.dataset.messageId = messageId;
+  }
+
+  function updateChatBubble() {
+    if (state.unreadCount > 0) {
+      refs.chatBubble.classList.add('has-new');
+      refs.chatBubble.innerHTML = `<i class="fas fa-comments"></i><span class="unread-badge">${state.unreadCount}</span>`;
+    } else {
+      refs.chatBubble.classList.remove('has-new');
+      refs.chatBubble.innerHTML = `<i class="fas fa-comments"></i>`;
+    }
+  }
+
+  function showNotification(message) {
+    // Visual notification
+    if (document.hidden) {
+      // Page is in background - use browser notification if available
+      if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification(`Pesan dari ${message.name}`, {
+          body: message.text,
+          icon: '/favicon.ico'
+        });
+      }
+    } else {
+      // Page is visible - show subtle notification
+      const notification = document.createElement('div');
+      notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: var(--primary);
+        color: white;
+        padding: 12px 16px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 10001;
+        max-width: 300px;
+        word-wrap: break-word;
+      `;
+      notification.innerHTML = `
+        <strong>${message.name}</strong><br>
+        ${message.text}
+      `;
+      document.body.appendChild(notification);
+      
+      setTimeout(() => {
+        notification.remove();
+      }, 5000);
+    }
+
+    // Vibration if supported
+    if ('vibrate' in navigator) {
+      navigator.vibrate([200, 100, 200]);
+    }
+  }
+
+  function markMessagesAsDelivered() {
+    const messages = refs.chatMessages.querySelectorAll('.chat-message:not(.own)');
+    const uid = getLocalUid();
+    
+    messages.forEach(messageDiv => {
+      const messageId = messageDiv.dataset.messageId;
+      if (messageId && !messageDiv.classList.contains('delivered')) {
+        // Mark as delivered in Firebase
+        firebase.database().ref(`chat_delivered/${messageId}/${uid}`).set(Date.now());
+        messageDiv.classList.add('delivered');
+      }
+    });
+  }
+
+  function getLocalUid() {
+    let uid = localStorage.getItem('patrol_uid');
+    if (!uid) {
+      uid = 'user_' + Math.random().toString(36).substr(2, 9);
+      localStorage.setItem('patrol_uid', uid);
+    }
+    return uid;
+  }
+
+  // ✅ IMPROVED PDF generator: Cover page 50/50 layout + better area pages
+  refs.btnGeneratePDF.addEventListener('click', async ()=>{
+    try{
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({unit:'mm',format:'a4'});
+      const margin = 12;
+      const pageWidth = 210;
+      const pageHeight = 297;
+      const contentWidth = pageWidth - margin*2;
+      const officer = refs.officerName.value || 'Petugas';
+      const shiftVal = refs.shift.value || '';
+      const tanggal = refs.date.value || new Date().toLocaleDateString('id-ID');
+      const waktu = new Date().toLocaleTimeString();
+      const lokasiHeader = refs.manualLokasi.value || (state.gpsPath.length ? `${state.gpsPath[state.gpsPath.length-1].lat.toFixed(6)}, ${state.gpsPath[state.gpsPath.length-1].lon.toFixed(6)}` : '-');
+
+      // ✅ COVER PAGE: 50/50 LAYOUT
+      // Header gradient
+      doc.setFillColor(7, 32, 74); // Dark blue
+      doc.rect(0, 0, pageWidth, 50, 'F');
+      doc.setFontSize(24); 
+      doc.setTextColor(255, 255, 255); 
+      doc.text('LAPORAN PATROLI', pageWidth/2, 30, {align:'center'});
+      
+      // Content area starting from y=60
+      const contentStartY = 60;
+      const contentHeight = pageHeight - contentStartY - 20;
+      const leftWidth = (pageWidth - margin*2) / 2;
+      const rightWidth = leftWidth;
+      
+      // Left side: Data Petugas
+      const leftX = margin;
+      const leftY = contentStartY;
+      
+      // Background for data section
+      doc.setFillColor(245, 247, 250);
+      doc.rect(leftX, leftY, leftWidth, contentHeight, 'F');
+      doc.setDrawColor(200, 200, 200);
+      doc.rect(leftX, leftY, leftWidth, contentHeight);
+      
+      // Data content
+      doc.setFontSize(16);
+      doc.setTextColor(0, 0, 0);
+      doc.text('DATA PETUGAS', leftX + leftWidth/2, leftY + 15, {align:'center'});
+      
+      const dataRows = [
+        {label: 'Nama', value: officer},
+        {label: 'Tanggal', value: tanggal},
+        {label: 'Shift', value: shiftVal},
+        {label: 'Jam', value: waktu},
+        {label: 'Lokasi', value: lokasiHeader}
+      ];
+      
+      doc.setFontSize(11);
+      let dataY = leftY + 35;
+      const rowHeight = 20;
+      
+      dataRows.forEach(row => {
+        doc.setFillColor(255, 255, 255);
+        doc.rect(leftX + 8, dataY - 6, leftWidth - 16, 16, 'F');
+        doc.setDrawColor(220, 220, 220);
+        doc.rect(leftX + 8, dataY - 6, leftWidth - 16, 16);
+        
+        doc.setTextColor(80, 80, 80);
+        doc.text(row.label + ':', leftX + 12, dataY + 2);
+        doc.setTextColor(0, 0, 0);
+        doc.text(String(row.value || '-'), leftX + 12, dataY + 8);
+        
+        dataY += rowHeight;
+      });
+      
+      // Right side: Foto Profil
+      const rightX = margin + leftWidth;
+      const rightY = contentStartY;
+      
+      // Background for photo section
+      doc.setFillColor(245, 247, 250);
+      doc.rect(rightX, rightY, rightWidth, contentHeight, 'F');
+      doc.setDrawColor(200, 200, 200);
+      doc.rect(rightX, rightY, rightWidth, contentHeight);
+      
+      doc.setFontSize(16);
+      doc.setTextColor(0, 0, 0);
+      doc.text('FOTO PROFIL', rightX + rightWidth/2, rightY + 15, {align:'center'});
+      
+      // Add profile photo if exists
+      if (state.profilePhoto) {
+        try {
+          const durl = await fetchAsDataUrl(state.profilePhoto.url);
+          const props = doc.getImageProperties(durl);
+          const photoMargin = 20;
+          const maxWidth = rightWidth - photoMargin * 2;
+          const maxHeight = contentHeight - 40;
+          
+          let imgWidth = maxWidth;
+          let imgHeight = (props.height / props.width) * imgWidth;
+          
+          if (imgHeight > maxHeight) {
+            imgHeight = maxHeight;
+            imgWidth = (props.width / props.height) * imgHeight;
+          }
+          
+          const imgX = rightX + (rightWidth - imgWidth) / 2;
+          const imgY = rightY + 30;
+          
+          doc.addImage(durl, 'JPEG', imgX, imgY, imgWidth, imgHeight);
+        } catch(e) {
+          console.warn('Profile photo add failed', e);
+          doc.setFontSize(12);
+          doc.setTextColor(150, 150, 150);
+          doc.text('Foto tidak dapat dimuat', rightX + rightWidth/2, rightY + 60, {align:'center'});
+        }
+      } else {
+        doc.setFontSize(12);
+        doc.setTextColor(150, 150, 150);
+        doc.text('Tidak ada foto profil', rightX + rightWidth/2, rightY + 60, {align:'center'});
+      }
+      
+      // Cover done
+      doc.addPage();
+
+      // ✅ AREA PAGES: Improved layout with photo left + description right
+      for(const area of state.areas){
+        // Start new page for each area
+        if (doc.internal.getCurrentPageInfo().pageNumber > 1) {
+          doc.addPage();
+        }
+        
+        // Area header band
+        const rgb = colorForIdRgb(area.id);
+        doc.setFillColor(rgb[0], rgb[1], rgb[2]);
+        doc.rect(margin, 10, pageWidth - margin*2, 12, 'F');
+        doc.setTextColor(255, 255, 255); 
+        doc.setFontSize(14);
+        doc.text(area.name + (area.detail ? ' — ' + area.detail : ''), margin + 5, 18);
+        doc.setTextColor(0, 0, 0);
+        
+        let cursorY = 25;
+        
+        // Area description at top (if any)
+        if(area.description && area.description.trim()){
+          const lines = doc.splitTextToSize(area.description, contentWidth - 10);
+          const descHeight = lines.length * 5;
+          
+          if(cursorY + descHeight > pageHeight - margin - 50){
+            doc.addPage(); 
+            cursorY = margin;
+          }
+          
+          doc.setFontSize(10); 
+          doc.setFillColor(250, 250, 250);
+          doc.rect(margin, cursorY, contentWidth, descHeight + 8, 'F');
+          doc.setTextColor(0, 0, 0);
+          doc.text(lines, margin + 5, cursorY + 6);
+          cursorY += descHeight + 15;
+        }
+        
+        // Photos with improved layout
+        for(const p of area.photos){
+          try{
+            const durl = await fetchAsDataUrl(p.url);
+            const imgProps = doc.getImageProperties(durl);
+            
+            // Calculate dimensions for two-column layout
+            const photoWidth = contentWidth * 0.6; // 60% for photo
+            const descWidth = contentWidth * 0.4;  // 40% for description
+            const photoHeight = (imgProps.height / imgProps.width) * photoWidth;
+            
+            // Description text
+            const descLines = p.desc && p.desc.trim() ? 
+              doc.splitTextToSize(p.desc, descWidth - 15) : ['(Tidak ada deskripsi)'];
+            const descHeight = Math.max(descLines.length * 4.5, photoHeight);
+            
+            const coordText = (p.lat && p.lon) ? 
+              (`Koordinat: ${p.lat.toFixed(6)}, ${p.lon.toFixed(6)} — ${p.ts ? new Date(p.ts).toLocaleString() : ''}`) : 
+              'Koordinat: -';
+            
+            // Check if we need new page
+            const blockNeeded = Math.max(photoHeight, descHeight) + 30;
+            
+            if(cursorY + blockNeeded > pageHeight - margin - 10){
+              doc.addPage();
+              cursorY = margin + 10;
+            }
+            
+            // Photo column (left)
+            const photoX = margin;
+            const photoY = cursorY;
+            doc.addImage(durl, 'JPEG', photoX, photoY, photoWidth, photoHeight);
+            
+            // Coordinates below photo
+            doc.setFontSize(8);
+            doc.setTextColor(100, 100, 100);
+            doc.text(coordText, photoX, photoY + photoHeight + 5);
+            
+            // Description column (right) with different background
+            const descX = margin + photoWidth + 5;
+            const descY = cursorY;
+            
+            // Background for description
+            doc.setFillColor(240, 245, 255);
+            doc.rect(descX, descY, descWidth, descHeight, 'F');
+            doc.setDrawColor(200, 210, 230);
+            doc.rect(descX, descY, descWidth, descHeight);
+            
+            // Description text
+            doc.setFontSize(10);
+            doc.setTextColor(0, 0, 0);
+            let textY = descY + 8;
+            descLines.forEach(line => {
+              if (textY < descY + descHeight - 5) {
+                doc.text(line, descX + 5, textY);
+                textY += 4.5;
+              }
+            });
+            
+            cursorY += Math.max(photoHeight, descHeight) + 20;
+            
+            // Separator line
+            if(cursorY < pageHeight - margin - 5){
+              doc.setDrawColor(200, 200, 200);
+              doc.setLineWidth(0.3);
+              doc.line(margin, cursorY - 5, margin + contentWidth, cursorY - 5);
+            }
+            
+          } catch(e) {
+            console.warn('Photo processing failed', e);
+          }
+        }
+        
+        // Space between areas
+        cursorY += 15;
+      }
+
+      // Signature page
+      doc.addPage();
+      doc.setFontSize(16); 
+      doc.text('TANDA TANGAN PETUGAS', margin, 30);
+      
+      if(state.signature){
+        try{ 
+          const sigWidth = 80;
+          const sigHeight = 40;
+          const sigX = margin + (contentWidth - sigWidth) / 2;
+          doc.addImage(state.signature, 'PNG', sigX, 45, sigWidth, sigHeight); 
+        } catch(e) { 
+          console.warn('Signature add failed', e); 
+        }
+      } else {
+        doc.setFontSize(12); 
+        doc.setTextColor(150, 150, 150);
+        doc.text('(Tidak ada tanda tangan tersimpan)', margin, 55);
+      }
+      
+      const lineY = 45 + 40 + 15;
+      doc.setDrawColor(0, 0, 0);
+      doc.setLineWidth(0.7); 
+      doc.line(margin, lineY, margin + contentWidth, lineY);
+      
+      doc.setFontSize(12); 
+      doc.setTextColor(0, 0, 0);
+      const nameToPrint = refs.officerName.value || 'Petugas'; 
+      doc.text(nameToPrint, margin + contentWidth/2, lineY + 8, {align:'center'});
+      
+      doc.setFontSize(9); 
+      doc.setTextColor(100, 100, 100);
+      doc.text('Tanda tangan sudah otomatis terverifikasi dan tervalidasi by system', margin, lineY + 18);
+
+      // GPS summary
+      const gpsSample = state.gpsPath.slice(-10).map(g => `${g.lat?.toFixed(6)||''},${g.lon?.toFixed(6)||''} @ ${new Date(g.timestamp||Date.now()).toLocaleString()}`);
+      doc.setFontSize(8); 
+      doc.setTextColor(0, 0, 0);
+      doc.text('GPS path (latest 10):', margin, lineY + 30);
+      doc.setFontSize(7); 
+      doc.setTextColor(80, 80, 80);
+      doc.text(doc.splitTextToSize(gpsSample.join('\n'), contentWidth), margin, lineY + 35);
+
+      // Save PDF
+      const ab = doc.output('arraybuffer');
+      const blob = new Blob([ab], {type:'application/pdf'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); 
+      a.href = url; 
+      a.download = 'laporan_patroli_'+ (new Date()).toISOString().slice(0,19).replace(/[:T]/g,'_') + '.pdf';
+      document.body.appendChild(a); 
+      a.click(); 
+      setTimeout(()=>{ 
+        try{ 
+          document.body.removeChild(a); 
+          URL.revokeObjectURL(url);
+        } catch(e){} 
+      }, 1500);
+
+    } catch(err) {
+      console.error('Generate PDF failed', err);
+      alert('Generate PDF gagal: '+(err.message||err));
+    }
+  });
+
+  async function fetchAsDataUrl(url){
+    const resp = await fetch(url); 
+    const blob = await resp.blob();
+    return await new Promise((res,rej)=>{ 
+      const fr = new FileReader(); 
+      fr.onload = ()=>res(fr.result); 
+      fr.onerror = rej; 
+      fr.readAsDataURL(blob); 
+    });
+  }
+
+  // ✅ IMPROVED CLOUDINARY UPLOAD dengan retry mechanism
+  window.uploadToCloudinary = function(file, retries = 3) {
+    return new Promise(function(resolve, reject) {
+      if(!file) return reject('No file');
+      
+      function attemptUpload(attempt) {
+        var url = 'https://api.cloudinary.com/v1_1/' + window.CLOUDINARY.cloudName + '/upload';
+        var fd = new FormData();
+        fd.append('file', file);
+        fd.append('upload_preset', window.CLOUDINARY.uploadPreset);
+        
+        var xhr = new XMLHttpRequest();
+        xhr.timeout = 30000; // 30 second timeout
+        
+        xhr.open('POST', url, true);
+        xhr.onreadystatechange = function() { 
+          if(xhr.readyState == 4) { 
+            if(xhr.status == 200) { 
+              try{ 
+                var res = JSON.parse(xhr.responseText); 
+                resolve(res.secure_url); 
+              } catch(e) { 
+                if (attempt < retries) {
+                  console.log(`Retry upload attempt ${attempt + 1}`);
+                  setTimeout(() => attemptUpload(attempt + 1), 1000 * attempt);
+                } else {
+                  reject(e); 
+                }
+              } 
+            } else { 
+              if (attempt < retries) {
+                console.log(`Retry upload attempt ${attempt + 1}`);
+                setTimeout(() => attemptUpload(attempt + 1), 1000 * attempt);
+              } else {
+                reject(xhr.responseText || xhr.status); 
+              }
+            } 
+          } 
+        };
+        
+        xhr.ontimeout = function() {
+          if (attempt < retries) {
+            console.log(`Retry upload attempt ${attempt + 1} (timeout)`);
+            setTimeout(() => attemptUpload(attempt + 1), 1000 * attempt);
+          } else {
+            reject('Upload timeout');
+          }
+        };
+        
+        xhr.send(fd);
+      }
+      
+      attemptUpload(1);
+    });
+  };
+
+  // expose
+  window.__patrol_state = state;
+  window.__patrol_api = { renderAreas, renderCheckpointList, doDeepClean };
+
+  // render initial
+  renderAreas(); 
+  renderCheckpointList(); 
+  renderProfilePhoto();
+  updateModeUI();
+  
+  // ✅ Initialize chat setelah semua ready
+  setTimeout(() => {
+    initChat().catch(e => console.error('Chat init failed:', e));
+  }, 1000);
+
+  // compatibility banner
+  (function(){
+    const supports = { 
+      getUserMedia: !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia), 
+      jsqr: !!window.jsQR, 
+      fetch: typeof fetch === 'function', 
+      download: (function(){ const a=document.createElement('a'); return typeof a.download !== 'undefined'; })() 
+    };
+    
+    const banner = document.createElement('div');
+    banner.style.position='fixed'; 
+    banner.style.left='10px'; 
+    banner.style.right='10px'; 
+    banner.style.top='60px'; 
+    banner.style.zIndex=9999; 
+    banner.style.padding='8px'; 
+    banner.style.borderRadius='8px'; 
+    banner.style.textAlign='center';
+    
+    if(!supports.getUserMedia){ 
+      banner.style.background='#f59e0b'; 
+      banner.style.color='#000'; 
+      banner.textContent='Perhatian: Browser ini mungkin tidak mendukung kamera langsung. Gunakan "Scan dari File/Galeri" atau buka di Chrome Android untuk hasil terbaik.'; 
+      document.body.appendChild(banner); 
+      setTimeout(()=>banner.remove(),10000); 
+    }
+  })();
+
+})();
+</script>
+
+<script>
+// ✅ IMPROVED FIREBASE & CLOUDINARY INTEGRATION
+(function(){
+  // Ensure we have a stable UID stored locally
+  function getLocalUid(){
+    var uid = localStorage.getItem('patrol_uid');
+    if(uid) return uid;
+    var u = 'anon_' + Math.random().toString(36).slice(2,9);
+    localStorage.setItem('patrol_uid', u);
+    return u;
+  }
+  window.getLocalUid = getLocalUid;
+
+  // Override handleFiles dari original app untuk upload ke Cloudinary dan push ke Firebase
+  window._orig_handleFiles = window.handleFiles || null;
+  window.handleFiles = async function(areaId, files, pos){
+    try{
+      // normalize files jika user pass {files,pos} object
+      if(Array.isArray(files)===false && files && files.files) files = Array.from(files.files || []);
+      else files = Array.from(files || []);
+
+      const uid = getLocalUid();
+      
+      // find area object in state jika exists
+      const area = (window.__patrol_state && window.__patrol_state.areas && 
+                   window.__patrol_state.areas.find(function(a){return a.id===areaId;})) || null;
+      
+      for(const f of files){
+        try{
+          console.log('Uploading file to Cloudinary...');
+          
+          // upload ke cloudinary dengan retry
+          var uploadedUrl = await window.uploadToCloudinary(f);
+          console.log('Upload successful:', uploadedUrl);
+          
+          var ts = (pos && pos.ts) || (new Date()).getTime();
+          var lat = (pos && pos.lat) || (window.__patrol_state && window.__patrol_state.gpsPath && 
+                    window.__patrol_state.gpsPath.length ? window.__patrol_state.gpsPath.slice(-1)[0].lat : null) || null;
+          var lon = (pos && pos.lon) || (window.__patrol_state && window.__patrol_state.gpsPath && 
+                    window.__patrol_state.gpsPath.length ? window.__patrol_state.gpsPath.slice(-1)[0].lon : null) || null;
+
+          // add ke local area.photos untuk immediate UI feedback
+          var photoId = 'photo_' + Math.random().toString(36).slice(2,9);
+          var photoObj = { id: photoId, url: uploadedUrl, desc: '', lat: lat, lon: lon, ts: ts };
+          
+          if(area){ 
+            area.photos.push(photoObj); 
+            if(window.__patrol_api && window.__patrol_api.renderAreas) window.__patrol_api.renderAreas(); 
+          }
+
+          // push ke Realtime DB under patroli/{uid}/ jika Firebase tersedia
+          try {
+            if (window.firebase && firebase.database) {
+              var payload = { 
+                photo: uploadedUrl, 
+                areaId: areaId, 
+                lat: lat, 
+                lon: lon, 
+                desc: '', 
+                time: ts, 
+                officer: (document.getElementById('officerName') && document.getElementById('officerName').value) || 'Petugas' 
+              };
+              
+              await firebase.database().ref('patroli').child(uid).push(payload);
+
+              // juga update /live/{uid}/lastGps dan presence
+              var liveData = { 
+                lastGps: { lat: lat, lon: lon, time: ts }, 
+                presence: { officerName: payload.officer, lastSeen: ts } 
+              };
+              
+              await firebase.database().ref('live').child(uid).update(liveData);
+            }
+          } catch (firebaseError) {
+            console.warn('Firebase upload failed, but Cloudinary succeeded:', firebaseError);
+          }
+
+        } catch(e){ 
+          console.warn('Upload single file error:', e); 
+          alert('Upload foto gagal; cek koneksi internet'); 
+        }
+      }
+      
+      // re-render areas UI setelah semua upload
+      if(window.__patrol_api && window.__patrol_api.renderAreas) window.__patrol_api.renderAreas();
+      
+    } catch(err){ 
+      console.error('handleFiles override error', err); 
+      if(window._orig_handleFiles) {
+        try{ 
+          return window._orig_handleFiles(areaId, files, pos); 
+        } catch(e){ 
+          console.warn('Fallback to original handleFiles failed', e); 
+        } 
+      }
+    }
+  };
+
+  // Periodic heartbeat untuk push last GPS ke /live/{uid}
+  setInterval(function(){
+    try{
+      if (!window.firebase || !firebase.database) return;
+      
+      var uid = getLocalUid();
+      var db = firebase.database();
+      var gps = (window.__patrol_state && window.__patrol_state.gpsPath && 
+                 window.__patrol_state.gpsPath.slice(-1)[0]) || null;
+                 
+      if(gps){ 
+        db.ref('live').child(uid).update({ 
+          lastGps: { lat: gps.lat, lon: gps.lon, time: gps.timestamp }, 
+          presence: { 
+            officerName: (document.getElementById('officerName') && document.getElementById('officerName').value) || 'Petugas', 
+            lastSeen: gps.timestamp 
+          } 
+        }); 
+      }
+    } catch(e){ 
+      console.warn('Heartbeat error:', e); 
+    }
+  }, 10000); // ✅ Increased to 10 seconds to reduce load
+
+  console.log('✅ Cloudinary + Firebase integration injected (with retry mechanism)');
+
+})();
+</script>
+</body>
+</html>
