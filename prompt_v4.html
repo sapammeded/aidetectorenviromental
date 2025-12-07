@@ -1,0 +1,432 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Prompt Patrol AI - Balanced</title>
+<style>
+  :root {
+    --primary: #0A1931;
+    --secondary: #1E3A5F;
+    --accent: #0b63ff;
+    --accent-dark: #0950d6;
+    --light: #f6f9ff;
+    --card: #fff;
+    --muted: #556070;
+    --radius: 10px;
+    --shadow: 0 6px 20px rgba(8,20,40,0.06);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial;
+    background: var(--light);
+    color:#081227;
+    padding:18px;
+    line-height:1.5;
+  }
+  .wrap{max-width:1000px;margin:0 auto;}
+  h1{font-size:20px;font-weight:700;color:var(--primary);margin-bottom:4px;}
+  .muted{font-size:13px;color:var(--muted);}
+  .grid{display:grid;grid-template-columns:1fr 420px;gap:14px;margin-top:12px;}
+  @media(max-width:900px){.grid{grid-template-columns:1fr}}
+  .card{
+    background:var(--card);
+    padding:16px;
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    border:1px solid rgba(11,99,255,0.06);
+    margin-bottom:10px;
+  }
+  label{display:block;font-weight:600;font-size:14px;margin-bottom:4px;}
+  input[type=text],textarea{
+    width:100%;padding:9px 10px;border-radius:8px;
+    border:1px solid #dde6f5;background:#fbfdff;font-size:14px;
+  }
+  textarea{min-height:160px;resize:vertical;}
+  .row{display:flex;gap:8px;margin-bottom:8px;}
+  .col{flex:1;}
+  button{
+    padding:9px 12px;border-radius:8px;border:0;
+    background:var(--accent);color:#fff;font-weight:600;font-size:14px;
+    cursor:pointer;transition:.2s;
+  }
+  button:hover{background:var(--accent-dark);transform:translateY(-1px);}
+  button.ghost{
+    background:transparent;color:var(--accent);
+    border:1px solid rgba(11,99,255,0.2);
+  }
+  button.ghost:hover{background:rgba(11,99,255,0.06);}
+  .expert-grid{
+    display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:6px 0 4px;
+  }
+  .expert-item{
+    display:flex;gap:6px;align-items:flex-start;
+    background:#fbfdff;border-radius:8px;
+    border:1px solid rgba(11,99,255,0.06);
+    padding:8px;cursor:pointer;font-size:12px;
+  }
+  .expert-item:hover{background:#eef3ff;}
+  .expert-item input{margin-top:2px;}
+  .category-header{
+    margin-top:10px;padding-top:6px;
+    border-top:2px solid rgba(11,99,255,0.16);
+    font-size:13px;font-weight:700;color:var(--primary);
+  }
+  .master-badge{
+    font-size:10px;background:var(--accent);color:#fff;
+    border-radius:999px;padding:2px 6px;margin-left:6px;
+  }
+  #preview{max-width:100%;margin-top:8px;border-radius:8px;display:none;}
+  .output-wrapper{
+    position:relative;
+    background:#020617;
+    color:#e5e7eb;
+    padding:14px;
+    border-radius:10px;
+    min-height:160px;
+    font-size:13px;
+  }
+  .output-wrapper pre{
+    margin:0;white-space:pre-wrap;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  }
+  .copy-btn{
+    position:absolute;top:8px;right:8px;
+    background:#1e293b;border-radius:999px;
+    padding:5px 10px;font-size:11px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Prompt Patrol AI — Balanced</h1>
+  <div class="muted">Upload foto → pilih expert → isi catatan → Generate → Copy ke AI (Gemini/ChatGPT).</div>
+
+  <div class="grid">
+    <div>
+      <div class="card">
+        <label>1) Upload foto (kamera / galeri)</label>
+        <div class="row">
+          <div class="col"><input id="cameraInput" type="file" accept="image/*" capture="environment"></div>
+          <div class="col"><input id="galleryInput" type="file" accept="image/*"></div>
+        </div>
+        <img id="preview"/>
+
+        <div class="row">
+          <div class="col">
+            <label>Latitude</label>
+            <input id="lat" type="text" placeholder="Latitude...">
+          </div>
+          <div class="col">
+            <label>Longitude</label>
+            <input id="lon" type="text" placeholder="Longitude...">
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col">
+            <label>Timestamp</label>
+            <input id="timestamp" type="text" placeholder="Kosongkan untuk otomatis">
+          </div>
+          <div class="col" style="display:flex;align-items:flex-end;gap:8px;flex-wrap:wrap;">
+            <button id="getGeoBtn" class="ghost">Ambil GPS</button>
+            <button id="clearBtn" class="ghost">Clear</button>
+          </div>
+        </div>
+
+        <label style="margin-top:8px;">2) Pilih ahli (boleh lebih dari satu) <span class="master-badge">MASTER</span></label>
+
+        <div class="category-header">K3 & SAFETY</div>
+        <div id="expertAreaK3" class="expert-grid"></div>
+
+        <div class="category-header">FORENSIK & INVESTIGASI</div>
+        <div id="expertAreaForensic" class="expert-grid"></div>
+
+        <div class="category-header">ENGINEERING & KONSTRUKSI</div>
+        <div id="expertAreaEngineering" class="expert-grid"></div>
+
+        <label style="margin-top:10px;">Catatan tambahan (opsional)</label>
+        <textarea id="note" placeholder="Contoh: 'Pos 1, akses barat, lampu gangguan, patroli jam 02:15'"></textarea>
+      </div>
+    </div>
+
+    <div>
+      <div class="card">
+        <label>Mode Prompt</label>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;">
+            <input id="aggressiveToggle" type="checkbox">
+            Aggressive mode (lebih ketat, tetap boleh tulis situasi AMAN)
+          </label>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px;">
+          <button id="generateBtn">Generate Prompt</button>
+          <button id="copyUserBtn" class="ghost">Copy USER</button>
+          <button id="copyBothBtn" class="ghost">Copy SYSTEM+USER</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <label>Output Prompt (blok kode + tombol copy)</label>
+        <div id="promptOutputWrapper" class="output-wrapper">
+          <button class="copy-btn" id="copyBlockBtn">Copy</button>
+          <pre><code id="promptOutput">(Belum ada output. Klik Generate dulu.)</code></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="muted" style="margin-top:8px;">Tips: kalau buka file ini langsung (file://), GPS kadang ditolak browser. Lebih stabil kalau lewat HTTPS atau localhost.</div>
+</div>
+
+<script>
+const EXPERTS = [
+  {id:'exp1', label:'Security / Satpam Profesional (sertifikat profesional)', category:'k3'},
+  {id:'exp2', label:'Ahli K3 Umum', category:'k3'},
+  {id:'exp3', label:'Ahli K3 Konstruksi', category:'k3'},
+  {id:'exp4', label:'Ahli K3 Kimia', category:'k3'},
+  {id:'exp5', label:'Ahli K3 Listrik', category:'k3'},
+  {id:'exp6', label:'Ahli K3 Manufaktur', category:'k3'},
+  {id:'exp7', label:'Ahli K3 Minyak dan Gas', category:'k3'},
+  {id:'exp8', label:'Ahli Fire Safety / Pemadam Kebakaran', category:'k3'},
+  {id:'exp9', label:'Ahli Auditor SMK3', category:'k3'},
+  {id:'exp10', label:'Ahli K3 Pertambangan', category:'k3'},
+  {id:'exp11', label:'Ahli Environmental & Lingkungan Hidup', category:'k3'},
+  {id:'exp21', label:'Ahli K3 Spesialis Penanggulangan Kebakaran Tingkat A', category:'k3'},
+  {id:'exp12', label:'Team Forensik INAFIS', category:'forensic'},
+  {id:'exp13', label:'Ahli Arsitek', category:'engineering'},
+  {id:'exp14', label:'Insinyur Sipil / Struktural (Site Engineer)', category:'engineering'},
+  {id:'exp15', label:'Konsultan Pengawas (Construction Management)', category:'engineering'},
+  {id:'exp16', label:'Konsultan Struktur', category:'engineering'},
+  {id:'exp17', label:'Konsultan M&E (Mechanical & Electrical)', category:'engineering'},
+  {id:'exp18', label:'Quantity Surveyor (QS)', category:'engineering'},
+  {id:'exp19', label:'Ahli TKBT (Bangunan Tinggi) lvl 1-2', category:'engineering'},
+  {id:'exp20', label:'Ahli TKPK (Kerja di Ketinggian) lvl 1-3', category:'engineering'}
+];
+
+function renderExperts() {
+  const k3 = document.getElementById('expertAreaK3');
+  const fo = document.getElementById('expertAreaForensic');
+  const en = document.getElementById('expertAreaEngineering');
+  k3.innerHTML = fo.innerHTML = en.innerHTML = '';
+  EXPERTS.forEach(e=>{
+    const item = document.createElement('label');
+    item.className = 'expert-item';
+    item.innerHTML = '<input type="checkbox" id="'+e.id+'"><div>'+e.label+'</div>';
+    if(e.category === 'k3') k3.appendChild(item);
+    else if(e.category === 'forensic') fo.appendChild(item);
+    else en.appendChild(item);
+  });
+}
+
+// file preview
+let lastImageFile = null;
+const preview = document.getElementById('preview');
+['cameraInput','galleryInput'].forEach(id=>{
+  document.getElementById(id).addEventListener('change', e=>{
+    const f = e.target.files[0];
+    if(!f) return;
+    lastImageFile = f;
+    preview.src = URL.createObjectURL(f);
+    preview.style.display = 'block';
+    if(!document.getElementById('timestamp').value){
+      document.getElementById('timestamp').value = new Date().toISOString();
+    }
+  });
+});
+
+// geo
+document.getElementById('getGeoBtn').addEventListener('click', async ()=>{
+  const btn = document.getElementById('getGeoBtn');
+  if(!('geolocation' in navigator)){ alert('Browser tidak mendukung geolocation'); return; }
+  btn.disabled = true; const old = btn.textContent; btn.textContent = 'Minta izin lokasi...';
+  try{
+    navigator.geolocation.getCurrentPosition(pos=>{
+      document.getElementById('lat').value = pos.coords.latitude.toFixed(6);
+      document.getElementById('lon').value = pos.coords.longitude.toFixed(6);
+      btn.disabled = false; btn.textContent = old;
+    }, err=>{
+      btn.disabled = false; btn.textContent = old;
+      alert('Gagal ambil lokasi: '+(err.message||'unknown'));
+    }, {enableHighAccuracy:true,timeout:15000,maximumAge:5000});
+  }catch(e){
+    btn.disabled = false; btn.textContent = old;
+    alert('Error geolocation');
+  }
+});
+
+// clear
+document.getElementById('clearBtn').addEventListener('click', ()=>{
+  lastImageFile = null;
+  preview.src = ''; preview.style.display='none';
+  ['lat','lon','timestamp','note'].forEach(id=>document.getElementById(id).value='');
+  setOutput('(Belum ada output. Klik Generate dulu.)');
+});
+
+function buildSystemPrompt(aggressive, selectedIds){
+  const ids = Array.isArray(selectedIds)?selectedIds:[];
+  let rolesSentence;
+  if(ids.length>0){
+    const names = EXPERTS
+      .filter(e=>ids.includes(e.id))
+      .map(e=>e.label.replace(/\s*\(.*?\)\s*/g,''));
+    rolesSentence = names.join(' DAN ');
+  }else{
+    rolesSentence = 'seorang Satpam Profesional DAN seorang Security Auditor DAN seorang Physical Security Consultant DAN seorang Emergency Response Coordinator DAN seorang Ahli K3 Umum DAN seorang Electrical Safety Specialist DAN seorang Scaffolding Inspector';
+  }
+
+  let base =
+`Anda adalah ${rolesSentence}.
+Semua peran ini AKTIF BERSAMAAN dan Anda bekerja sebagai satu tim ahli yang disiplin.
+
+ATURAN UTAMA:
+1. WAJIB mengikuti struktur laporan 5 poin dari user (LOKASI, KONDISI UMUM, SECURITY/K3 TEMUAN, KESIMPULAN, RUJUKAN HUKUM/STANDAR).
+2. Tidak boleh menambah bagian lain di luar struktur.
+3. Gunakan bahasa Indonesia profesional yang singkat, jelas, dan mudah dipahami.
+4. Jika foto kurang jelas, nyatakan keterbatasan analisa.
+5. Jawaban untuk setiap foto WAJIB berada di dalam SATU blok kode markdown (\`\`\`text ... \`\`\`).`;
+
+  base += `
+
+Tambahan aturan penting (WAJIB DIIKUTI):
+- Jika secara visual area tampak rapi, bersih, tertib, dan tidak terlihat bahaya signifikan, Anda BOLEH dan WAJIB menuliskan bahwa situasi AMAN / TERKENDALI.
+- Anda HARUS menyebutkan juga observasi POSITIF (contoh: penerangan baik, jalur evakuasi jelas, APAR tersedia, kabel tertata, tidak ada genangan, area bersih, dsb) jika memang tampak di foto.
+- Jangan memaksa mencari pelanggaran jika dari foto tidak terlihat jelas adanya bahaya atau ketidaksesuaian.
+- Lebih baik menulis "tidak ditemukan pelanggaran signifikan dari sudut pandang foto ini" dibanding mengarang bahaya yang tidak tampak.`;
+
+  if(aggressive){
+    base += `
+
+MODE AGRESIF:
+- Tetap patuh struktur 5 poin.
+- Fokus pada temuan penting, namun JANGAN memaksakan pelanggaran bila tidak tampak.
+- Jika ada potensi bahaya kecil, sebutkan sebagai POTENSI dengan saran perbaikan, bukan vonis berat.`;
+  }
+
+  return base;
+}
+
+function buildUserInstructions(){
+  return `STRUKTUR LAPORAN WAJIB UNTUK SETIAP FOTO:
+
+1. LOKASI:
+   - Deskripsikan jalan, area, atau posisi utama yang difoto.
+
+2. KONDISI UMUM:
+   - Deskripsikan kondisi permukaan, tata letak, pencahayaan/cuaca, dan situasi umum.
+
+3. SECURITY/K3 TEMUAN:
+   - Berikan poin-poin temuan spesifik yang tampak di foto (risiko, bahaya, dan juga observasi POSITIF bila ada).
+   - Tulis singkat, padat, dan bisa dimengerti orang awam.
+
+4. KESIMPULAN:
+   - Tegaskan apakah situasi termasuk: AMAN TERKENDALI / PERLU DIWASPADAI / BERISIKO TINGGI.
+   - Sertakan alasan utama secara singkat.
+   - Jika mayoritas kondisi baik dan rapi, boleh tulis: "Secara umum aman terkendali dengan beberapa catatan kecil (jika ada)."
+
+5. RUJUKAN HUKUM/STANDAR:
+   - Sertakan rujukan hukum/standar yang relevan di Indonesia atau disiplin K3, misalnya:
+     • UU No.1 Tahun 1970 tentang Keselamatan Kerja
+     • UU / PP terkait ketenagakerjaan & K3
+     • Permenaker terkait K3
+     • PUIL untuk listrik (bila terkait instalasi listrik)
+     • atau standar K3 umum lainnya.
+
+OUTPUT YANG WAJIB:
+- Untuk SETIAP foto, buat SATU laporan dalam SATU blok kode markdown dengan format:
+
+\`\`\`text
+FOTO X
+LOKASI:
+  ...
+
+KONDISI UMUM:
+  ...
+
+SECURITY/K3 TEMUAN:
+  - ...
+  - ...
+
+KESIMPULAN:
+  ...
+
+RUJUKAN HUKUM/STANDAR:
+  - ...
+\`\`\`
+
+- Jika saya mengirim BANYAK foto, buat beberapa blok kode terpisah: FOTO 1, FOTO 2, dan seterusnya.
+- Jangan menulis apapun di luar blok kode tersebut (tidak perlu JSON, tidak perlu penjelasan tambahan).`;
+}
+
+function setOutput(txt){
+  document.getElementById('promptOutput').textContent = txt;
+}
+
+document.getElementById('generateBtn').addEventListener('click', ()=>{
+  try{
+    const lat = document.getElementById('lat').value.trim();
+    const lon = document.getElementById('lon').value.trim();
+    const ts  = document.getElementById('timestamp').value || new Date().toISOString();
+    const notes = document.getElementById('note').value || '(tidak ada catatan tambahan)';
+    const hasPhoto = lastImageFile ? 'YA, foto terlampir.' : 'TIDAK ada foto (analisa terbatas dari teks).';
+
+    const checkedIds = Array.from(document.querySelectorAll('.expert-item input[type=checkbox]:checked')).map(i=>i.id);
+
+    const ctx =
+`DATA KONTEKS LAPANGAN:
+- Foto: ${hasPhoto}
+- Timestamp: ${ts}
+- Lokasi GPS: ${lat && lon ? lat+', '+lon : '(tidak tersedia)'}
+- Catatan tambahan dari petugas: ${notes}`;
+
+    const instructions = buildUserInstructions();
+    const aggressive = document.getElementById('aggressiveToggle').checked;
+    const systemMsg = buildSystemPrompt(aggressive, checkedIds);
+
+    const finalPrompt =
+`--- SYSTEM MESSAGE ---
+${systemMsg}
+
+--- USER MESSAGE ---
+${ctx}
+
+${instructions}
+
+Setelah ini saya akan mengirim SATU ATAU BANYAK foto patroli.
+Untuk setiap foto, gunakan konteks dan struktur di atas lalu buat laporan sesuai format WAJIB (blok kode text).`;
+
+    setOutput(finalPrompt);
+  }catch(e){
+    console.error(e);
+    alert('Gagal generate prompt.');
+  }
+});
+
+// copy tombol di blok
+document.getElementById('copyBlockBtn').addEventListener('click', ()=>{
+  const txt = document.getElementById('promptOutput').textContent;
+  if(!txt || txt.startsWith('(Belum ada')){ alert('Belum ada output. Klik Generate dulu.'); return; }
+  navigator.clipboard.writeText(txt).then(()=>alert('Semua prompt disalin.'));
+});
+
+// copy user only
+document.getElementById('copyUserBtn').addEventListener('click', ()=>{
+  const txt = document.getElementById('promptOutput').textContent;
+  if(!txt || txt.startsWith('(Belum ada')){ alert('Generate dulu.'); return; }
+  const idx = txt.indexOf('--- USER MESSAGE ---');
+  const out = idx>=0 ? txt.slice(idx + '--- USER MESSAGE ---'.length).trim() : txt;
+  navigator.clipboard.writeText(out).then(()=>alert('Bagian USER saja disalin.'));
+});
+
+// copy both
+document.getElementById('copyBothBtn').addEventListener('click', ()=>{
+  const txt = document.getElementById('promptOutput').textContent;
+  if(!txt || txt.startsWith('(Belum ada')){ alert('Generate dulu.'); return; }
+  navigator.clipboard.writeText(txt).then(()=>alert('SYSTEM + USER disalin.'));
+});
+
+renderExperts();
+setOutput('(Belum ada output. Klik Generate dulu.)');
+
+</script>
+</body>
+</html>
